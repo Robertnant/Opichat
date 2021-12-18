@@ -16,10 +16,7 @@ int create_and_connect(struct addrinfo *addrinfo)
         if (sfd == -1)
             continue;
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-        {
-            printf("basic_client: connection success\n");
             break;
-        }
         close(sfd);
     }
     if (rp == NULL)
