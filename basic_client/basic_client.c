@@ -16,12 +16,15 @@ int create_and_connect(struct addrinfo *addrinfo)
         if (sfd == -1)
             continue;
         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+        {
+            printf("basic_client: connection success\n");
             break;
+        }
         close(sfd);
     }
     if (rp == NULL)
     {
-        err(1, "basic_client: connection failed");
+        err(1, "connection failed");
     }
     freeaddrinfo(addrinfo);
     return sfd;
@@ -38,7 +41,7 @@ int prepare_socket(const char *ip, const char *port)
 
     int value = getaddrinfo(ip, port, &hints, &addrinfo);
     if (value != 0)
-        err(value, "basic_client: cannot get addresses");
+        err(value, "cannot get addresses");
 
     return create_and_connect(addrinfo);
 }
@@ -52,7 +55,7 @@ void resend(const char *buff, size_t len, int fd)
         ssize_t res = send(fd, buff + l, len - l, 0);
         if (res == -1)
         {
-            err(1, "basic_client: failed to send data");
+            err(1, "failed to send data");
         }
         l += res;
     }
@@ -67,7 +70,9 @@ void print_response(int fd)
     while ((n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0) != 0))
     {
         if (n == -1)
-            err(1, "basic_client: failed to receive response");
+        {
+            err(1, "failed to receive response");
+        }
 
         resend(receive, n, 1);
     }
@@ -94,3 +99,17 @@ void communicate(int server_socket)
         free(lineptr);
 }
 
+int main(int argc, char **argv)
+{
+    if (argc != 3)
+    {
+        printf("Usage: ./basic_client SERVER_IP SERVER_PORT\n");
+        return 1;
+    }
+
+    // Prepare socket and handle communication.
+    int server_socket = prepare_socket(argv[1], argv[2]);
+    communicate(server_socket);
+
+    return 0;
+}
