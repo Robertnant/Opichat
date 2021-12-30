@@ -1,11 +1,11 @@
+#include "basic_client.h"
+
 #include <err.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "basic_client.h"
 
 int create_and_connect(struct addrinfo *addrinfo)
 {
@@ -85,19 +85,18 @@ void print_response(int fd)
     }
 }
 
-
 void communicate(int server_socket)
 {
     ssize_t res;
     char *lineptr = NULL;
     size_t n = 0;
-    while (fprintf(stderr, "Enter your message:\n") &&
-            (res = getline(&lineptr, &n, stdin)) != -1)
+    while (fprintf(stderr, "Enter your message:\n")
+           && (res = getline(&lineptr, &n, stdin)) != -1)
     {
         resend(lineptr, res, server_socket);
         print_response(server_socket);
 
-        //free memory and reset n
+        // free memory and reset n
         /*free(lineptr);
         lineptr = NULL;
         n = 0;*/
