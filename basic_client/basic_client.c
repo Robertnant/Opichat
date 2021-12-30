@@ -1,4 +1,5 @@
 #include <err.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -63,27 +64,24 @@ void print_response(int fd)
 {
     char receive[DEFAULT_BUFFER_SIZE];
     ssize_t n;
-    printf("Server answered with: ");
 
-    // Prepare standart output for next write.
+    printf("Server answered with: ");
     fflush(stdout);
 
-    n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0);
-    if (n == -1)
+    while ((n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
-        err(1, "failed to receive response");
-    }
-
-    // Prints server response to standard output till newline reached.
-    ssize_t l = 0;
-    while (l < n)
-    {
-        ssize_t res = write(1, receive + l, n - l);
-        if (res == -1)
+        // Prints server response to standard output till newline reached.
+        ssize_t l = 0;
+        while (l < n)
         {
-            err(1, "failed to send data");
+            ssize_t res = write(1, receive + l, n - l);
+
+            if (res == -1)
+            {
+                err(1, "failed to send data");
+            }
+            l += res;
         }
-        l += res;
     }
 }
 
@@ -118,6 +116,10 @@ int main(int argc, char **argv)
 
     // Prepare socket and handle communication.
     int server_socket = prepare_socket(argv[1], argv[2]);
+
+    // Make socket non blocking.
+    fcntl(server_socket, F_SETFL, O_NONBLOCK);
+
     communicate(server_socket);
 
     return 0;
