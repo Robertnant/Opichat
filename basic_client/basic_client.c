@@ -65,24 +65,25 @@ void print_response(int fd)
     ssize_t n;
     printf("Server answered with: ");
 
-    while ((n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0)) != 0)
-    {
-        if (n == -1)
-        {
-            err(1, "failed to receive response");
-        }
+    // Prepare standart output for next write.
+    fflush(stdout);
 
-        // Prints server response to standard output till newline reached.
-        ssize_t l = 0;
-        while (l < n)
+    n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0);
+    if (n == -1)
+    {
+        err(1, "failed to receive response");
+    }
+
+    // Prints server response to standard output till newline reached.
+    ssize_t l = 0;
+    while (l < n)
+    {
+        ssize_t res = write(1, receive + l, n - l);
+        if (res == -1)
         {
-            ssize_t res = write(1, receive + l, n - l);
-            if (res == -1)
-            {
-                err(1, "failed to send data");
-            }
-            l += res;
+            err(1, "failed to send data");
         }
+        l += res;
     }
 }
 
