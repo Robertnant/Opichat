@@ -86,10 +86,10 @@ void communicate(int client_socket)
     char receive[DEFAULT_BUFFER_SIZE];
     ssize_t n;
 
-    printf("Received Body: ");
     fflush(stdout);
 
-    while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
+    while (printf("Received Body: ") &&
+            (n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
         // Prints client response to standard output till newline reached.
         // Sends the same message back to client.
@@ -114,7 +114,8 @@ void communicate(int client_socket)
 
             if (l_send < n)
             {
-                res = send(client_socket, receive + l_send, n - l_send, 0);
+                res = send(client_socket,
+                        receive + l_send, n - l_send, MSG_NOSIGNAL);
 
                 if (res == -1)
                 {
@@ -125,6 +126,10 @@ void communicate(int client_socket)
             }
         }
     }
+
+    // Check if client disconnected.
+    if (n == -1 && errno == EPIPE)
+        puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
