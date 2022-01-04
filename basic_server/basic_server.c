@@ -120,17 +120,17 @@ void communicate(int client_socket)
 
                 if (res == -1)
                 {
-                    err(1, "failed to send data back to client");
+                    // Check if client disconnected.
+                    if (errno == EPIPE)
+                        puts("Client disconnected");
+                    else
+                        err(1, "failed to send data back to client");
                 }
 
                 l_send += res;
             }
         }
     }
-
-    // Check if client disconnected.
-    if (n == -1 && errno == EPIPE)
-        puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
