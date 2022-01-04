@@ -1,4 +1,11 @@
-#include "basic.server.h"
+#include "basic_server.h"
+
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int create_and_bind(struct addrinfo *addrinfo)
 {
@@ -37,8 +44,6 @@ int prepare_socket(const char *ip, const char *port)
 {
     struct addrinfo *addrinfo;
     struct addrinfo hints;
-    int errcode, sfd, connfd; 
-    socklen_t connfd_len;
 
     // Initialize hints fields.
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -46,7 +51,8 @@ int prepare_socket(const char *ip, const char *port)
     hints.ai_socktype = SOCK_STREAM;
 
     // Get addresses.
-    if (getaddrinfo(ip, port, &hints, &addrinfo) != 0)
+    int value = getaddrinfo(ip, port, &hints, &addrinfo);
+    if (value != 0)
         err(1, "failed to get address info");
 
     // Get binded socket.
@@ -62,8 +68,9 @@ int prepare_socket(const char *ip, const char *port)
 int accept_client(int socket)
 {
     // Accept an incoming connection.
-    connfd_len = sizeof(client);
-    connfd = accept(sfd, &client, &connfd_len);
+    struct sockaddr client;
+    socklen_t connfd_len = sizeof(client);
+    int connfd = accept(socket, &client, &connfd_len);
 
     if (connfd == -1)
         err(1, "failed to accept connection");
@@ -73,26 +80,75 @@ int accept_client(int socket)
     return connfd;
 }
 
+// Reads response from client and prints to sdout then back to client
 void communicate(int client_socket)
 {
-    // Read short or long messages from client and resend messages.
-    char buffer[DEFAULT_BUFFER_SIZE];
+    char receive[DEFAULT_BUFFER_SIZE];
+    ssize_t n;
 
-    ssize_t r;
-    while ((r = read(fd_in, buffer, BUFFER_SIZE)))
+    printf("Received Body: ");
+    fflush(stdout);
+
+    while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
-        if (r == -1)
-            err(3, "Failed to read input data");
+        // Prints client response to standard output till newline reached.
+        // Sends the same message back to client.
+        ssize_t l_write = 0;
+        ssize_t l_send = 0;
+        ssize_t res = 0;
 
-        rewrite(fd_out, buffer, r);
+        while (l_write < n || l_send < n)
+        {
+            // Handle write to stdout.
+            if (l_write < n)
+            {
+                res = write(1, receive + l_write, n - l_write);
+
+                if (res == -1)
+                {
+                    err(1, "failed to write data to stdout");
+                }
+
+                l_write += res;
+            }
+
+            if (l_send < n)
+            {
+                res = send(client_socket, receive + l_send, n - l_send, 0);
+
+                if (res == -1)
+                {
+                    err(1, "failed to send data back to client");
+                }
+
+                l_send += res;
+            }
+        }
     }
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
-    // Wait for connections.
-    // 42 is equivalent to true.
+    if (argc != 3)
+    {
+        puts("Usage: ./basic_server SERVER_IP SERVER_PORT");
+        return 1;
+    }
+
+    // Get listening socket.
+    int listen_sock = prepare_socket(argv[1], argv[2]);
+
+    // Wait for connections and start communication. 42 is equivalent to true.
     while (42)
     {
+        int client_socket = accept_client(listen_sock);
+        communicate(client_socket);
+
+        // Close client connection.
+        close(client_socket);
     }
+
+    close(listen_sock);
+
+    return 0;
 }
