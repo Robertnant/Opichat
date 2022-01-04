@@ -95,8 +95,8 @@ void communicate(int client_socket)
         if (n == 0)
         {
             // Check if client disconnected.
-            puts("Client disconnected");
-            fflush(0);
+            // puts("Client disconnected");
+            // fflush(0);
             break;
         }
 
