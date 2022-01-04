@@ -92,13 +92,9 @@ void communicate(int client_socket)
     while (printf("Received Body: ") &&
             (n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
+        // Move to next client when nothing is received.
         if (n == 0)
-        {
-            // Check if client disconnected.
-            // puts("Client disconnected");
-            // fflush(0);
             break;
-        }
 
         // Prints client response to standard output till newline reached.
         // Sends the same message back to client.
