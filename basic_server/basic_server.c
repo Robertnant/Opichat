@@ -92,6 +92,14 @@ void communicate(int client_socket)
     while (printf("Received Body: ") &&
             (n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
+        if (n == 0)
+        {
+            // Check if client disconnected.
+            puts("Client disconnected");
+            fflush(0);
+            break;
+        }
+
         // Prints client response to standard output till newline reached.
         // Sends the same message back to client.
         ssize_t l_write = 0;
@@ -120,11 +128,7 @@ void communicate(int client_socket)
 
                 if (res == -1)
                 {
-                    // Check if client disconnected.
-                    if (errno == EPIPE)
-                        puts("Client disconnected");
-                    else
-                        err(1, "failed to send data back to client");
+                    err(1, "failed to send data back to client");
                 }
 
                 l_send += res;
