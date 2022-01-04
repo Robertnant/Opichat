@@ -1,5 +1,5 @@
 CC= gcc
-CFLAGS= -Werror -Wall -Wextra -pedantic -std=c99 -fsanitize=address
+CFLAGS= -Werror -Wall -Wextra -pedantic -std=c99 -fsanitize=address \
 	-D_POSIX_C_SOURCE=200809L
 
 SRC= basic_server.c
