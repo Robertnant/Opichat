@@ -115,7 +115,7 @@ void communicate(int client_socket)
                 if (errno == EPIPE)
                 {
                     puts("Client disconnected");
-                    return;
+                    break;
                 }
 
                 l_send += res;
