@@ -104,7 +104,23 @@ void communicate(int client_socket)
 
         while (l_write < n || l_send < n)
         {
-            // Handle write to stdout.
+            if (l_send < n)
+            {
+                res = send(client_socket,
+                        receive + l_send, n - l_send, MSG_NOSIGNAL);
+
+                if (res == -1)
+                    err(1, "failed to send data back to client");
+
+                if (errno == EPIPE)
+                {
+                    puts("Client disconnected");
+                    return;
+                }
+
+                l_send += res;
+            }
+
             if (l_write < n)
             {
                 res = write(1, receive + l_write, n - l_write);
@@ -115,19 +131,6 @@ void communicate(int client_socket)
                 }
 
                 l_write += res;
-            }
-
-            if (l_send < n)
-            {
-                res = send(client_socket,
-                        receive + l_send, n - l_send, MSG_NOSIGNAL);
-
-                if (res == -1)
-                {
-                    err(1, "failed to send data back to client");
-                }
-
-                l_send += res;
             }
         }
     }
