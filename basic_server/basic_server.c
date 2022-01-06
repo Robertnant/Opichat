@@ -97,7 +97,7 @@ void communicate(int client_socket)
         {
             fflush(stdout);
             puts("Client disconnected");
-            //fflush(stdout);
+            fflush(stdout);
             break;
         }
 
@@ -116,7 +116,7 @@ void communicate(int client_socket)
 
                 if (errno == EPIPE)
                 {
-                    break;
+                    return;
                 }
 
                 if (res == -1)
@@ -128,11 +128,6 @@ void communicate(int client_socket)
             if (l_write < n)
             {
                 res = write(1, receive + l_write, n - l_write);
-
-                if (errno == EPIPE)
-                {
-                    break;
-                }
 
                 if (res == -1)
                 {
