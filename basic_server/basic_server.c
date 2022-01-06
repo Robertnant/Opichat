@@ -129,6 +129,11 @@ void communicate(int client_socket)
             {
                 res = write(1, receive + l_write, n - l_write);
 
+                if (errno == EPIPE)
+                {
+                    break;
+                }
+
                 if (res == -1)
                 {
                     err(1, "failed to write data to stdout");
