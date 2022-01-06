@@ -111,6 +111,7 @@ void communicate(int client_socket)
 
                 if (errno == EPIPE)
                 {
+                    puts("Client disconnected");
                     break;
                 }
 
@@ -133,8 +134,6 @@ void communicate(int client_socket)
             }
         }
     }
-
-    puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
