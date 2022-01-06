@@ -3,6 +3,7 @@
 #include <err.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/epoll.h>
 
 /**
@@ -56,6 +57,7 @@ struct connection_t *accept_client(int epoll_instance, int server_socket,
     // to resume reading data from a specific client.
 }
 
+// TODO Check 25 lines count.
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -64,10 +66,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Get a listener socket.
-    int listener_fd = prepare_socket(argv[1], argv[2]);
+    // Get a listener socket for server.
+    int listen_sock = prepare_socket(argv[1], argv[2]);
 
-    // Create an epoll instance (file descriptor) and add listening socket to set.
+    // Create an epoll instance (file descriptor) and add listening socket to
+    // set.
     struct epoll_event event;
 
     int epoll_instance = epoll_create1(0);
@@ -87,6 +90,7 @@ int main(int argc, char **argv)
     // Wait indefinitely for an event to occur.
     while (true)
     {
+        struct connection_t *connection = malloc(sizeof(struct connection_t));
         // Create list for events that will occur from epoll instance
         // (ready list).
         struct epoll_events events[MAX_EVENTS];
@@ -105,8 +109,15 @@ int main(int argc, char **argv)
             // Listener socket.
             if (events[event_idx].data.fd == listen_sock)
             {
+                // Accept a new client and add it to the connection_t struct.
+                connection =
+                    accept_client(epoll_instance, listen_sock, connection);
 
+                if (!connection)
+                    err(1, "failed to accept new client");
             }
+            else
+            {}
         }
     }
 }
