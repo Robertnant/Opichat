@@ -94,9 +94,7 @@ void communicate(int client_socket)
     {
         // Move to next client when nothing is received.
         if (n == 0)
-        {
             break;
-        }
 
         // Prints client response to standard output till newline reached.
         // Sends the same message back to client.
@@ -135,9 +133,6 @@ void communicate(int client_socket)
             }
         }
     }
-
-    fflush(stdout);
-    puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
@@ -159,6 +154,8 @@ int main(int argc, char **argv)
 
         // Close client connection.
         close(client_socket);
+        fflush(stdout);
+        puts("Client disconnected");
     }
 
     close(listen_sock);
