@@ -95,9 +95,6 @@ void communicate(int client_socket)
         // Move to next client when nothing is received.
         if (n == 0)
         {
-            fflush(stdout);
-            puts("Client disconnected");
-            fflush(stdout);
             break;
         }
 
@@ -116,7 +113,7 @@ void communicate(int client_socket)
 
                 if (errno == EPIPE)
                 {
-                    return;
+                    break;
                 }
 
                 if (res == -1)
@@ -138,6 +135,9 @@ void communicate(int client_socket)
             }
         }
     }
+
+    fflush(stdout);
+    puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
