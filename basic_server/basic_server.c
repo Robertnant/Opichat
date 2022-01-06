@@ -87,14 +87,18 @@ void communicate(int client_socket)
     char receive[DEFAULT_BUFFER_SIZE];
     ssize_t n;
 
-    fflush(stdout);
+    //fflush(stdout);
 
-    while (printf("Received Body: ") &&
-            (n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
+    while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
         // Move to next client when nothing is received.
         if (n == 0)
+        {
+            write(1, "Client disconnected", sizeof("Client disconnected"));
             break;
+        }
+
+        write(1, "Received Body: ", sizeof("Received Body: "));
 
         // Prints client response to standard output till newline reached.
         // Sends the same message back to client.
@@ -152,8 +156,6 @@ int main(int argc, char **argv)
 
         // Close client connection.
         close(client_socket);
-        fflush(stdout);
-        puts("Client disconnected");
     }
 
     close(listen_sock);
