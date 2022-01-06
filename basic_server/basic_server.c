@@ -109,13 +109,13 @@ void communicate(int client_socket)
                 res = send(client_socket,
                         receive + l_send, n - l_send, MSG_NOSIGNAL);
 
-                if (res == -1)
-                    err(1, "failed to send data back to client");
-
                 if (errno == EPIPE)
                 {
                     break;
                 }
+
+                if (res == -1)
+                    err(1, "failed to send data back to client");
 
                 l_send += res;
             }
