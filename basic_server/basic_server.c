@@ -116,8 +116,10 @@ void communicate(int client_socket)
                 if (errno == EPIPE)
                     break;
 
+                /*
                 if (res == -1)
                     err(1, "failed to send data back to client");
+                */
 
                 l_send += res;
             }
@@ -126,10 +128,12 @@ void communicate(int client_socket)
             {
                 res = write(1, receive + l_write, n - l_write);
 
+                /*
                 if (res == -1)
                 {
                     err(1, "failed to write data to stdout");
                 }
+                */
 
                 l_write += res;
             }
