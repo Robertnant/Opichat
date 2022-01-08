@@ -110,7 +110,8 @@ void communicate(int client_socket)
             if (l_send < n)
             {
                 res = send(client_socket,
-                        receive + l_send, n - l_send, MSG_NOSIGNAL);
+                        receive + l_send, n - l_send, MSG_NOSIGNAL |
+                        MSG_DONTWAIT);
 
                 if (errno == EPIPE)
                 {
