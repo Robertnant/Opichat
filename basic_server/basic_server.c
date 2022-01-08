@@ -119,14 +119,6 @@ void communicate(int client_socket)
         while ((n = recv(client_socket, receive + total_len,
                          DEFAULT_BUFFER_SIZE, 0)))
         {
-            /*
-            if (n == -1)
-            {
-                free(receive);
-                err(1, "failed to read data from client");
-            }
-            */
-
             if (n == 0 || n == -1)
                 break;
 
