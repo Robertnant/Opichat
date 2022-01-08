@@ -1,10 +1,9 @@
-#include "epoll-server.h"
-
 #include <err.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
+
+#include "epoll-server.h"
 
 /**
  * \brief Iterate over the struct addrinfo elements to create and bind a socket
@@ -19,7 +18,35 @@
  */
 int create_and_bind(struct addrinfo *addrinfo)
 {
-    // TODO: Rajouter code de Clarel.
+    struct addrinfo *rp = NULL;
+    int sfd;
+
+    // Iterate through each address and attempt connection.
+    for (rp = addrinfo; rp != NULL; rp = rp->ai_next)
+    {
+        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+        if (sfd == -1)
+            continue;
+
+        // Enable reuse of address.
+        int enable = 1;
+        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int))
+            == -1)
+        {
+            err(1, "socket option setting failed");
+        }
+
+        // Bind socket to address.
+        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+            break;
+    }
+
+    // Check for bind success.
+    if (rp == NULL)
+        err(1, "could not bind any socket to address");
+
+    return sfd;
 }
 
 /**
@@ -37,7 +64,27 @@ int create_and_bind(struct addrinfo *addrinfo)
  */
 int prepare_socket(const char *ip, const char *port)
 {
-    // TODO: Rajouter code de Clarel.
+    struct addrinfo *addrinfo;
+    struct addrinfo hints;
+
+    // Initialize hints fields.
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    // Get addresses.
+    int value = getaddrinfo(ip, port, &hints, &addrinfo);
+    if (value != 0)
+        err(1, "failed to get address info");
+
+    // Get binded socket.
+    int sfd = create_and_bind(addrinfo);
+
+    // Enable 1 incoming connection (1 by default).
+    if ((listen(sfd, 1)) == -1)
+        err(1, "listen failed");
+
+    return sfd;
 }
 
 /**
@@ -53,11 +100,72 @@ int prepare_socket(const char *ip, const char *port)
 struct connection_t *accept_client(int epoll_instance, int server_socket,
                                    struct connection_t *connection)
 {
-    // connection_t struct is only useful when needing to know from where
-    // to resume reading data from a specific client.
+    // Accept an incoming connection.
+    struct sockaddr client;
+    socklen_t connfd_len = sizeof(client);
+    int connfd = accept(socket, &client, &connfd_len);
+
+    if (connfd == -1)
+    {
+        perror(1, "failed to accept new client");
+        close(connfd);
+        return connection;
+    }
+
+    connection = add_client(connection, connfd);
+
+    puts("Client connected");
+}
+
+// Handles long messages to send.
+void resend(const char *buff, size_t len, int fd,
+        struct connection_t *connection)
+{
+    size_t l = 0;
+    while (l < len)
+    {
+        ssize_t res = send(fd, buff + l, len - l, 0);
+
+        if (res == -1)
+        {
+            perror("failed to broadcast data to a client");
+            return 1;
+        }
+        l += res;
+    }
+
+    return 0;
+}
+
+// Broadcasts message sent by client.
+void broadcast(struct connection_t *connection, int connfd)
+{
+    char buffer[DEFAULT_BUFFER_SIZE];
+    ssize_t n = recv(connfd, buffer, DEFAULT_BUFFER_SIZE, 0);
+
+    // Handle client disconnection or error.
+    if (n <= 0)
+    {
+        if (n == -1)
+            perror("failed to read data from client");
+        else
+            puts("Client disconnected");
+
+        connection = remove_client(connection, connfd);
+    }
+    else
+    {
+        for (struct curr = connection; curr != NULL; curr = curr->next)
+        {
+            if (resend(buffer, n, curr->client_socket) == 1)
+                connection = remove_client(connection, curr->client_socket);
+        }
+    }
 }
 
 // TODO Check 25 lines count.
+// connection_t struct is only useful when needing to know from where
+// to resume reading data from a specific client.
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -88,7 +196,7 @@ int main(int argc, char **argv)
         err(1, "failed to add listener socket to epoll instance");
 
     // Wait indefinitely for an event to occur.
-    while (true)
+    while (1)
     {
         struct connection_t *connection = malloc(sizeof(struct connection_t));
         // Create list for events that will occur from epoll instance
@@ -101,7 +209,7 @@ int main(int argc, char **argv)
         int events_count = epoll_wait(epoll_instance, events, MAX_EVENTS, -1);
 
         if (events_count == -1)
-            err(1, "failed to wait for events to occur on given socket");
+            err(1, "failed to wait for events to occur");
 
         // Handle ready file descriptors.
         for (int event_idx = 0; event_idx < events_count; event_idx++)
@@ -112,12 +220,11 @@ int main(int argc, char **argv)
                 // Accept a new client and add it to the connection_t struct.
                 connection =
                     accept_client(epoll_instance, listen_sock, connection);
-
-                if (!connection)
-                    err(1, "failed to accept new client");
             }
             else
-            {}
+            {
+                brodcast(connection, events[event_idx].data.fd);
+            }
         }
     }
 }
