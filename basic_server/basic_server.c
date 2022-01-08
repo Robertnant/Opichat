@@ -92,12 +92,10 @@ void communicate(int client_socket)
     while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
         // Move to next client when nothing is received.
-        /*
         if (n == 0)
         {
             break;
         }
-        */
 
         write(1, "Received Body: ", sizeof("Received Body: "));
 
