@@ -59,8 +59,8 @@ int prepare_socket(const char *ip, const char *port)
     // Get binded socket.
     int sfd = create_and_bind(addrinfo);
 
-    // Enable 5 incoming connections (5 by default).
-    if ((listen(sfd, 5)) == -1)
+    // Enable 1 incoming connection (1 by default).
+    if ((listen(sfd, 1)) == -1)
         err(1, "listen failed");
 
     return sfd;
@@ -114,13 +114,12 @@ void communicate(int client_socket)
 
                 if (errno == EPIPE)
                 {
-                    write(1, "Client disconnected",
-                            sizeof("Client disconnected"));
                     break;
                 }
 
                 if (res == -1)
-                    err(1, "failed to send data back to client");
+                    return;
+                    // err(1, "failed to send data back to client");
 
                 l_send += res;
             }
@@ -131,13 +130,16 @@ void communicate(int client_socket)
 
                 if (res == -1)
                 {
-                    err(1, "failed to write data to stdout");
+                    return;
+                    // err(1, "failed to write data to stdout");
                 }
 
                 l_write += res;
             }
         }
     }
+
+    write(1, "Client disconnected", sizeof("Client disconnected"));
 }
 
 int main(int argc, char **argv)
