@@ -1,6 +1,10 @@
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <sys/epoll.h>
 
 #include "epoll-server.h"
@@ -103,23 +107,36 @@ struct connection_t *accept_client(int epoll_instance, int server_socket,
     // Accept an incoming connection.
     struct sockaddr client;
     socklen_t connfd_len = sizeof(client);
-    int connfd = accept(socket, &client, &connfd_len);
+    int connfd = accept(server_socket, &client, &connfd_len);
 
     if (connfd == -1)
     {
-        perror(1, "failed to accept new client");
+        perror("failed to accept new client");
         close(connfd);
-        return connection;
+    }
+    else
+    {
+        struct epoll_event event;
+        event.events = EPOLLIN;
+        event.data.fd = connfd;
+
+        if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, connfd, &event) == -1)
+        {
+            perror("failed to add client fd to epoll instance");
+            close(connfd);
+        }
+        else
+        {
+            connection = add_client(connection, connfd);
+            puts("Client connected");
+        }
     }
 
-    connection = add_client(connection, connfd);
-
-    puts("Client connected");
+    return connection;
 }
 
 // Handles long messages to send.
-void resend(const char *buff, size_t len, int fd,
-        struct connection_t *connection)
+int resend(const char *buff, size_t len, int fd)
 {
     size_t l = 0;
     while (l < len)
@@ -155,7 +172,8 @@ void broadcast(struct connection_t *connection, int connfd)
     }
     else
     {
-        for (struct curr = connection; curr != NULL; curr = curr->next)
+        for (struct connection_t *curr = connection;
+                curr != NULL; curr = curr->next)
         {
             if (resend(buffer, n, curr->client_socket) == 1)
                 connection = remove_client(connection, curr->client_socket);
@@ -196,12 +214,13 @@ int main(int argc, char **argv)
         err(1, "failed to add listener socket to epoll instance");
 
     // Wait indefinitely for an event to occur.
+    struct connection_t *connection = NULL;
+
     while (1)
     {
-        struct connection_t *connection = malloc(sizeof(struct connection_t));
         // Create list for events that will occur from epoll instance
         // (ready list).
-        struct epoll_events events[MAX_EVENTS];
+        struct epoll_event events[MAX_EVENTS];
 
         // Wait for events on given file descriptors.
         // events_count represents number of file descriptors on which
@@ -223,7 +242,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                brodcast(connection, events[event_idx].data.fd);
+                broadcast(connection, events[event_idx].data.fd);
             }
         }
     }
