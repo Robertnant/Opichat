@@ -92,10 +92,12 @@ void communicate(int client_socket)
     while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
     {
         // Move to next client when nothing is received.
+        /*
         if (n == 0)
         {
             break;
         }
+        */
 
         write(1, "Received Body: ", sizeof("Received Body: "));
 
@@ -110,15 +112,14 @@ void communicate(int client_socket)
             if (l_send < n)
             {
                 res = send(client_socket,
-                        receive + l_send, n - l_send, MSG_NOSIGNAL |
-                        MSG_DONTWAIT);
+                        receive + l_send, n - l_send, MSG_NOSIGNAL);
 
                 if (errno == EPIPE)
                 {
                     break;
                 }
 
-                if (res == -1)
+                if (res == -1 || res == 0)
                     return;
                     // err(1, "failed to send data back to client");
 
@@ -129,7 +130,7 @@ void communicate(int client_socket)
             {
                 res = write(1, receive + l_write, n - l_write);
 
-                if (res == -1)
+                if (res == -1 || res == 0)
                 {
                     return;
                     // err(1, "failed to write data to stdout");
