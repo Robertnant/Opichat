@@ -23,8 +23,8 @@ int create_and_bind(struct addrinfo *addrinfo)
 
         // Enable reuse of address.
         int enable = 1;
-        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &enable,
-                    sizeof(int)) == -1)
+        if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int))
+            == -1)
         {
             err(1, "socket option setting failed");
         }
@@ -81,65 +81,84 @@ int accept_client(int socket)
     return connfd;
 }
 
+// Handle long messages by sending in file adescriptor
+// Returns 1 if client disconnection signaled.
+int resend(const char *buff, size_t len, int fd)
+{
+    size_t l = 0;
+    while (l < len)
+    {
+        ssize_t res = send(fd, buff + l, len - l, MSG_NOSIGNAL);
+
+        if (errno == EPIPE)
+            return 1;
+
+        if (res == -1)
+        {
+            err(1, "failed to send data");
+        }
+        l += res;
+    }
+
+    return 0;
+}
+
 // Reads response from client and prints to sdout then back to client
 void communicate(int client_socket)
 {
-    char receive[DEFAULT_BUFFER_SIZE];
+    char *receive = NULL;
     ssize_t n;
 
-    //fflush(stdout);
-
-    while ((n = recv(client_socket, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
+    while (1)
     {
-        // Move to next client when nothing is received.
-        if (n == 0)
+        ssize_t buffer_size = DEFAULT_BUFFER_SIZE;
+        ssize_t total_len = 0;
+        receive = calloc(buffer_size, sizeof(char));
+
+        // Check if message contains newline before handling it.
+        while ((n = recv(client_socket, receive + total_len,
+                         DEFAULT_BUFFER_SIZE, 0)))
         {
+            /*
+            if (n == -1)
+            {
+                free(receive);
+                err(1, "failed to read data from client");
+            }
+            */
+
+            if (n == 0 || n == -1)
+                break;
+
+            total_len += n;
+
+            // Reallocate space if necessary for next call.
+            if (buffer_size <= total_len)
+            {
+                buffer_size += DEFAULT_BUFFER_SIZE;
+                receive = realloc(receive, buffer_size);
+            }
+
+            // Send message back once newline received.
+            if (receive[total_len - 1] == '\n')
+            {
+                receive[total_len] = '\0';
+                break;
+            }
+        }
+
+        if (n == 0 || n == -1)
             break;
-        }
 
-        write(1, "Received Body: ", sizeof("Received Body: "));
+        // Send message back and check client disconnection.
+        if (resend(receive, total_len, client_socket) == 1)
+            break;
 
-        // Prints client response to standard output till newline reached.
-        // Sends the same message back to client.
-        ssize_t l_write = 0;
-        ssize_t l_send = 0;
-        ssize_t res = 0;
-
-        while (l_write < n || l_send < n)
-        {
-            if (l_send < n)
-            {
-                res = send(client_socket,
-                        receive + l_send, n - l_send, MSG_NOSIGNAL);
-
-                if (errno == EPIPE)
-                {
-                    break;
-                }
-
-                if (res == -1 || res == 0)
-                    return;
-                    // err(1, "failed to send data back to client");
-
-                l_send += res;
-            }
-
-            if (l_write < n)
-            {
-                res = write(1, receive + l_write, n - l_write);
-
-                if (res == -1 || res == 0)
-                {
-                    return;
-                    // err(1, "failed to write data to stdout");
-                }
-
-                l_write += res;
-            }
-        }
+        printf("Received body: %s", receive);
     }
 
-    write(1, "Client disconnected", sizeof("Client disconnected"));
+    free(receive);
+    puts("Client disconnected");
 }
 
 int main(int argc, char **argv)
