@@ -3,7 +3,7 @@ CFLAGS= -Werror -Wall -Wextra -pedantic -std=c99 -fsanitize=address \
 	-D_POSIX_C_SOURCE=200809L
 
 SRC= epoll-server.c connection.c ./utils/xalloc.c
-BIN= epoll-server
+BIN= epoll_server
 
 .PHONY= clean all
 
