@@ -194,9 +194,9 @@ void broadcast(struct connection_t *connection, int connfd)
             }
 
             // Clear client buffer.
-            free(client->buffer);
-            client->buffer = NULL;
-            client->nb_read = 0;
+            // free(client->buffer);
+            // client->buffer = NULL;
+            // client->nb_read = 0;
         }
         else
         {
