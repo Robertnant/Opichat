@@ -157,7 +157,7 @@ int resend(const char *buff, size_t len, int fd)
 }
 
 // Broadcasts message sent by client.
-void broadcast(struct connection_t *connection, int connfd)
+struct connection_t *broadcast(struct connection_t *connection, int connfd)
 {
     // Store received message till newline reached.
     char received[DEFAULT_BUFFER_SIZE];
@@ -190,7 +190,10 @@ void broadcast(struct connection_t *connection, int connfd)
             {
                 if (resend(client->buffer, client->nb_read, curr->client_socket)
                     == 1)
+                {
+                    puts("Broadcast failed");
                     connection = remove_client(connection, curr->client_socket);
+                }
             }
 
             // Clear client buffer.
@@ -203,6 +206,8 @@ void broadcast(struct connection_t *connection, int connfd)
             puts("Stored client's message");
         }
     }
+
+    return connection;
 }
 
 int main(int argc, char **argv)
@@ -263,7 +268,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                broadcast(connection, events[event_idx].data.fd);
+                connection = broadcast(connection, events[event_idx].data.fd);
             }
         }
     }
