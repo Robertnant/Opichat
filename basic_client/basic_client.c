@@ -95,11 +95,6 @@ void communicate(int server_socket)
     {
         resend(lineptr, res, server_socket);
         print_response(server_socket);
-
-        // free memory and reset n
-        /*free(lineptr);
-        lineptr = NULL;
-        n = 0;*/
     }
     if (lineptr != NULL)
         free(lineptr);
