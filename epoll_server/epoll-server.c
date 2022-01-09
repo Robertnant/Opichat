@@ -1,13 +1,15 @@
+#include "epoll-server.h"
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 
-#include "epoll-server.h"
+#include "utils/xalloc.h"
 
 /**
  * \brief Iterate over the struct addrinfo elements to create and bind a socket
@@ -157,12 +159,15 @@ int resend(const char *buff, size_t len, int fd)
 // Broadcasts message sent by client.
 void broadcast(struct connection_t *connection, int connfd)
 {
-    char buffer[DEFAULT_BUFFER_SIZE];
-    ssize_t n = recv(connfd, buffer, DEFAULT_BUFFER_SIZE, 0);
+    // Store received message till newline reached.
+    char received[DEFAULT_BUFFER_SIZE];
+    struct connection_t *client = find_client(connection, connfd);
 
-    // Handle client disconnection or error.
+    ssize_t n = recv(connfd, received, DEFAULT_BUFFER_SIZE, 0);
+
     if (n <= 0)
     {
+        // Handle client disconnection or error.
         if (n == -1)
             perror("failed to read data from client");
         else
@@ -172,18 +177,34 @@ void broadcast(struct connection_t *connection, int connfd)
     }
     else
     {
-        for (struct connection_t *curr = connection;
-                curr != NULL; curr = curr->next)
+        client->buffer = xrealloc(client->buffer, client->nb_read + n);
+        memcpy(client->buffer + client->nb_read, received, n);
+        client->nb_read += n;
+
+        if (client->buffer[client->nb_read - 1] == '\n')
         {
-            if (resend(buffer, n, curr->client_socket) == 1)
-                connection = remove_client(connection, curr->client_socket);
+            puts("Client message ready for broadcast");
+
+            for (struct connection_t *curr = connection; curr != NULL;
+                 curr = curr->next)
+            {
+                if (resend(client->buffer, client->nb_read, curr->client_socket)
+                    == 1)
+                    connection = remove_client(connection, curr->client_socket);
+            }
+
+            // Clear client buffer.
+            free(client->buffer);
+            client->buffer = NULL;
+            client->nb_read = 0;
+        }
+        else
+        {
+            puts("Stored client's message");
         }
     }
 }
 
-// TODO Check 25 lines count.
-// connection_t struct is only useful when needing to know from where
-// to resume reading data from a specific client.
 int main(int argc, char **argv)
 {
     if (argc != 3)
