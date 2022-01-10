@@ -156,8 +156,72 @@ int resend(const char *buff, size_t len, int fd)
     return 0;
 }
 
+// Sends message to a client and handles errors.
+void send_message(char *buffer, size_t len, int fd,
+        struct connection_t *connection)
+{
+    if (resend(client->buffer, client->nb_read, curr->client_socket) == 1)
+    {
+        puts("Broadcast failed");
+        connection = remove_client(connection, curr->client_socket);
+    }
+}
+
+// TODO 
+// Server might receive multiple commands from a same client at the same time.
+// The size of the payload is then crucial because of this issue.
+// Step 1: act as if server will only receive one client command at a time.
+
+// Step 2: Handle invalid requests.
+
+// Step 3: Handle case where multiple commands received (process commands till
+// last newline found in buffer.
+// Read Beej's guide in case of doubt.
 // Broadcasts message sent by client.
-struct connection_t *broadcast(struct connection_t *connection, int connfd)
+
+struct process_message(struct connection_t *client,
+        struct connection_t connection, int connfd)
+{
+    // Get payload size. (use strtok_re with \n)
+    char *token = NULL;
+    token = strtok(client->buffer, "\n");
+
+    // TODO use atol if atoi not good enough.
+    size_t payload_size = atoi(token);
+    // Get status code (one byte).
+    token = strtok(NULL, "\n");
+    int status = atoi(token);
+
+    // Use switch to determine which command was received.
+    token = strtok(NULL, "\n");
+
+    switch (1)
+    {
+        // TODO Find empty newline "\n\n" to get to payload
+        // for messages with parameters.
+        case strcmp(token, "PING") == 0:
+            char *pong = "5\n1\nPING\n\nPONG\n";
+            send_message(pong, strlen(pong), client->client_socket, connection);
+            break;
+        case strcmp(token, "LOGIN") == 0:
+            token = strtok(NULL, "\n");
+            sprintf(client->username, token);
+            char *response = "10\n1\nLOGIN\n\nLogged in\n";
+            send_message(response, strlen(pong),
+                    client->client_socket, connection);
+            break;
+        case strcmp(token, "LIST-USERS") == 0:
+            break;
+        case strcmp(token, "SEND-DM") == 0:
+            handle_param;
+            break;
+        case strcmp(token, "BROADCAST") == 0:
+            handle_param;
+            break;
+    }
+}
+
+struct connection_t *receive_message(struct connection_t *connection, int connfd)
 {
     // Store received message till newline reached.
     char received[DEFAULT_BUFFER_SIZE];
@@ -183,16 +247,7 @@ struct connection_t *broadcast(struct connection_t *connection, int connfd)
 
         if (client->buffer[client->nb_read - 1] == '\n')
         {
-            for (struct connection_t *curr = connection; curr != NULL;
-                 curr = curr->next)
-            {
-                if (resend(client->buffer, client->nb_read, curr->client_socket)
-                    == 1)
-                {
-                    puts("Broadcast failed");
-                    connection = remove_client(connection, curr->client_socket);
-                }
-            }
+            connection = process_message(client, connfd);
         }
     }
 
@@ -202,10 +257,7 @@ struct connection_t *broadcast(struct connection_t *connection, int connfd)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-    {
-        printf("Usage: ./opichat_server SERVER_IP SERVER_PORT\n");
-        return 1;
-    }
+        errx(1, "usage: ./opichat_server <ip> <port>");
 
     // Get a listener socket for server.
     int listen_sock = prepare_socket(argv[1], argv[2]);
