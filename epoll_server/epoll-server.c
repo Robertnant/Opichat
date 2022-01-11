@@ -195,6 +195,11 @@ struct connection_t *broadcast(struct connection_t *connection, int connfd)
                     connection = remove_client(connection, curr->client_socket);
                 }
             }
+
+            // Clear client message after send.
+            client->nb_read = 0;
+            free(client->buffer);
+            client->buffer = NULL;
         }
         else
         {
