@@ -1,6 +1,5 @@
 #define _GNU_SOURCE
 #include "opichat_client.h"
-#include "utils/xalloc.h"
 
 #include <err.h>
 #include <fcntl.h>
@@ -9,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "utils/xalloc.h"
 
 int create_and_connect(struct addrinfo *addrinfo)
 {
@@ -62,12 +63,12 @@ void resend(const char *buff, size_t len, int fd)
     }
 }
 
-// Creates tokens from message received from server.
-char **lexer(char *receive)
+// TODO Shorten code.
+// Creates tokens from parsed message and its count.
+char **lexer(char *receive, int *tokens_count)
 {
-    size_t tokens_count = 3;
-    char **tokens = xcalloc(tokens_count, sizeof(char *));
-    // ['4', '1', 'commande', 'par1', 'par2'..., NULL, 'payload']
+    *tokens_count = 3;
+    char **tokens = xcalloc(*tokens_count, sizeof(char *));
 
     char *token = NULL;
     char *save = NULL;
@@ -98,23 +99,29 @@ char **lexer(char *receive)
 
     // Get data parameters.
     token = strtok_r(NULL, "\n", &save);
-    puts(token);
+
     while (token)
     {
-        tokens_count++;
-        tokens = xrealloc(tokens, tokens_count * sizeof(char *));
-        asprintf(&tokens[tokens_count], "%s", token);
+        *tokens_count += 1;
+        tokens = xrealloc(tokens, *tokens_count * sizeof(char *));
+        asprintf(&tokens[*tokens_count - 1], "%s", token);
 
         token = strtok_r(NULL, "\n", &save);
     }
 
     // Add delimiter after parameters.
-    tokens[tokens_count - 1] = NULL;
+    *tokens_count += 1;
+    tokens = xrealloc(tokens, *tokens_count * sizeof(char *));
+    asprintf(&tokens[*tokens_count - 1], "%s", "");
 
     if (payload)
     {
-        tokens = xrealloc(tokens, tokens_count + 1);
-        memcpy(tokens[tokens_count], payload, atoll(tokens[0]));
+        size_t payload_size = atoll(tokens[0]);
+        *tokens_count += 1;
+
+        tokens = xrealloc(tokens, *(tokens_count) * sizeof(char *));
+        tokens[*tokens_count - 1] = xcalloc(payload_size + 1, sizeof(char));
+        memcpy(tokens[*tokens_count - 1], payload, payload_size);
     }
 
     return tokens;
@@ -124,37 +131,38 @@ char **lexer(char *receive)
 void *parse_message(void *arg)
 {
     int *fd = arg;
-    char *receive = xmalloc(sizeof(char) * DEFAULT_BUFFER_SIZE);
+    char *receive = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
     ssize_t n;
-    ssize_t i = 0;
-
-    printf("Server answered with: ");
-    fflush(stdout);
 
     while (42)
     {
+        ssize_t i = 0;
         while ((n = recv(*fd, receive + i, DEFAULT_BUFFER_SIZE, 0)) != -1)
         {
-            // Realloc the size
+            // Realloc the size and add one byte for null termination.
             i += n;
-            receive = xrealloc(receive, i);
+            receive = xrealloc(receive, (i + 1) * sizeof(char));
         }
-        //Parsing message(s)
-        //
 
-        /*
-        switch (status)
+        if (i != 0)
         {
+            receive[i] = '\0';
+            // Parsing message(s)
+            int count = 0;
+            char **tokens = lexer(receive, &count);
+
+            switch (atoi(tokens[1]))
+            {
             case 1:
-                if (payload_size != 0)
+                if (tokens[0] != 0)
                 {
-                    '<'
+                    write(1, tokens[count - 1], atoi(tokens[0]));
                 }
                 break;
             case 2:
-
+                break;
+            }
         }
-        */
     }
     return NULL;
 }
@@ -173,19 +181,6 @@ void communicate(int server_socket)
         free(lineptr);
 }
 
-int main(void)
-{
-    // Copy only payoad_size data to payload side.
-    char test[] = "9\n2\nSEND-DM\nUser=acu\nFrom=ING1\n\n2022\n2021";
-
-    char **tokens = lexer(test);
-
-    for (int i = 0; i < 5; i++)
-    {
-        puts(tokens[i]);
-    }
-}
-/*
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -199,10 +194,9 @@ int main(int argc, char **argv)
 
     pthread_t id;
     void *arg = &server_socket;
-    pthread_create(&id, NULL, &print_response, arg);
+    pthread_create(&id, NULL, &parse_message, arg);
 
     communicate(server_socket);
 
     return 0;
 }
-*/
