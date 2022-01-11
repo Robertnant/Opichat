@@ -160,7 +160,7 @@ int resend(const char *buff, size_t len, int fd)
 
 // Sends message to a client and handles errors.
 void send_message(char *buffer, size_t len, int fd,
-        struct connection_t *connection)
+                  struct connection_t *connection)
 {
     printf("< REQUEST_IN: %s", buffer);
 
@@ -171,7 +171,7 @@ void send_message(char *buffer, size_t len, int fd,
     }
 }
 
-// TODO 
+// TODO
 // Step 1: act as if server will only receive one client command at a time.
 
 // Step 2: Handle invalid requests.
@@ -181,7 +181,7 @@ void send_message(char *buffer, size_t len, int fd,
 // Read Beej's guide in case of doubt.
 
 struct connection_t *process_message(struct connection_t *client,
-        struct connection_t *connection)
+                                     struct connection_t *connection)
 {
     // Get payload size. (use strtok_re with \n)
     char *token = NULL;
@@ -220,12 +220,11 @@ struct connection_t *process_message(struct connection_t *client,
         token = strtok(NULL, "\n");
         asprintf(&(client->username), "%s", token);
         char *response = "10\n1\nLOGIN\n\nLogged in\n";
-        send_message(response, strlen(response),
-                client->client_socket, connection);
+        send_message(response, strlen(response), client->client_socket,
+                     connection);
     }
     else if (strcmp(token, "LIST-USERS") == 0)
-    {
-    }
+    {}
     else if (strcmp(token, "SEND-DM") == 0)
     {
         // handle_param;
