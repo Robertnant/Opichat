@@ -2,11 +2,11 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
 
 int create_and_connect(struct addrinfo *addrinfo)
 {
