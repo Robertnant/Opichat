@@ -10,6 +10,8 @@ struct connection_t
 {
     int client_socket; /**< socket fd of the client */
 
+    char *username; /**< username of the client */
+
     char *buffer; /**< buffer containing all the data received by this client */
 
     ssize_t nb_read; /**< number of bytes read (also size of the buffer) */

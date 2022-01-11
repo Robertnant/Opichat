@@ -103,10 +103,7 @@ void communicate(int server_socket)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-    {
-        printf("Usage: ./opichat_client SERVER_IP SERVER_PORT\n");
-        return 1;
-    }
+        errx(1, "usage: ./opichat_client <ip> <port>");
 
     // Prepare socket and handle communication.
     int server_socket = prepare_socket(argv[1], argv[2]);

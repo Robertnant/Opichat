@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "opichat_server.h"
 
 #include <err.h>
@@ -160,16 +162,16 @@ int resend(const char *buff, size_t len, int fd)
 void send_message(char *buffer, size_t len, int fd,
         struct connection_t *connection)
 {
-    if (resend(client->buffer, client->nb_read, curr->client_socket) == 1)
+    printf("< REQUEST_IN: %s", buffer);
+
+    if (resend(buffer, len, fd) == 1)
     {
-        puts("Broadcast failed");
-        connection = remove_client(connection, curr->client_socket);
+        printf("failed to send message to client %d", fd);
+        connection = remove_client(connection, fd);
     }
 }
 
 // TODO 
-// Server might receive multiple commands from a same client at the same time.
-// The size of the payload is then crucial because of this issue.
 // Step 1: act as if server will only receive one client command at a time.
 
 // Step 2: Handle invalid requests.
@@ -177,53 +179,68 @@ void send_message(char *buffer, size_t len, int fd,
 // Step 3: Handle case where multiple commands received (process commands till
 // last newline found in buffer.
 // Read Beej's guide in case of doubt.
-// Broadcasts message sent by client.
 
-struct process_message(struct connection_t *client,
-        struct connection_t connection, int connfd)
+struct connection_t *process_message(struct connection_t *client,
+        struct connection_t *connection)
 {
     // Get payload size. (use strtok_re with \n)
     char *token = NULL;
     token = strtok(client->buffer, "\n");
 
     // TODO use atol if atoi not good enough.
-    size_t payload_size = atoi(token);
+    ssize_t payload_size = atoi(token);
+
+    // Check if full message received (payload_size, len(payload_size), status).
+    // TODO Find way to handle size of parameters.
+    if (client->nb_read < payload_size)
+    {
+        printf("Waiting for full message of fd: %d\n", client->client_socket);
+        return connection;
+    }
+
     // Get status code (one byte).
     token = strtok(NULL, "\n");
     int status = atoi(token);
 
+    if (status != 0)
+        puts("invalid request");
+
     // Use switch to determine which command was received.
     token = strtok(NULL, "\n");
 
-    switch (1)
+    // TODO Find empty newline "\n\n" to get to payload
+    // for messages with parameters.
+    if (strcmp(token, "PING") == 0)
     {
-        // TODO Find empty newline "\n\n" to get to payload
-        // for messages with parameters.
-        case strcmp(token, "PING") == 0:
-            char *pong = "5\n1\nPING\n\nPONG\n";
-            send_message(pong, strlen(pong), client->client_socket, connection);
-            break;
-        case strcmp(token, "LOGIN") == 0:
-            token = strtok(NULL, "\n");
-            sprintf(client->username, token);
-            char *response = "10\n1\nLOGIN\n\nLogged in\n";
-            send_message(response, strlen(pong),
-                    client->client_socket, connection);
-            break;
-        case strcmp(token, "LIST-USERS") == 0:
-            break;
-        case strcmp(token, "SEND-DM") == 0:
-            handle_param;
-            break;
-        case strcmp(token, "BROADCAST") == 0:
-            handle_param;
-            break;
+        char *pong = "5\n1\nPING\n\nPONG\n";
+        send_message(pong, strlen(pong), client->client_socket, connection);
     }
+    else if (strcmp(token, "LOGIN") == 0)
+    {
+        token = strtok(NULL, "\n");
+        asprintf(&(client->username), "%s", token);
+        char *response = "10\n1\nLOGIN\n\nLogged in\n";
+        send_message(response, strlen(response),
+                client->client_socket, connection);
+    }
+    else if (strcmp(token, "LIST-USERS") == 0)
+    {
+    }
+    else if (strcmp(token, "SEND-DM") == 0)
+    {
+        // handle_param;
+    }
+    else if (strcmp(token, "BROADCAST") == 0)
+    {
+        // handle_param;
+    }
+
+    return connection;
 }
 
-struct connection_t *receive_message(struct connection_t *connection, int connfd)
+// Reads incoming message from client and processes it.
+struct connection_t *get_message(struct connection_t *connection, int connfd)
 {
-    // Store received message till newline reached.
     char received[DEFAULT_BUFFER_SIZE];
     struct connection_t *client = find_client(connection, connfd);
 
@@ -245,10 +262,7 @@ struct connection_t *receive_message(struct connection_t *connection, int connfd
         memcpy(client->buffer + client->nb_read, received, n);
         client->nb_read += n;
 
-        if (client->buffer[client->nb_read - 1] == '\n')
-        {
-            connection = process_message(client, connfd);
-        }
+        connection = process_message(client, connection);
     }
 
     return connection;
@@ -309,7 +323,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                connection = broadcast(connection, events[event_idx].data.fd);
+                connection = get_message(connection, events[event_idx].data.fd);
             }
         }
     }
