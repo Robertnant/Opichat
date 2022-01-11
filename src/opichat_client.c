@@ -173,8 +173,7 @@ void communicate(int server_socket)
     ssize_t res;
     char *lineptr = NULL;
     size_t n = 0;
-    while (fprintf(stderr, "Enter your message:\n")
-           && (res = getline(&lineptr, &n, stdin)) != -1)
+    while ((res = getline(&lineptr, &n, stdin)) != -1)
     {
         resend(lineptr, res, server_socket);
     }
