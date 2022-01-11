@@ -1,4 +1,6 @@
+#define _GNU_SOURCE
 #include "opichat_client.h"
+#include "utils/xalloc.h"
 
 #include <err.h>
 #include <fcntl.h>
@@ -60,9 +62,62 @@ void resend(const char *buff, size_t len, int fd)
     }
 }
 
+// Creates tokens from message received from server.
 char **lexer(char *receive)
 {
+    size_t tokens_count = 3;
+    char **tokens = xcalloc(tokens_count, sizeof(char *));
+    // ['4', '1', 'commande', 'par1', 'par2'..., NULL, 'payload']
 
+    char *token = NULL;
+    char *save = NULL;
+
+    token = strtok_r(receive, "\n", &save);
+    asprintf(&tokens[0], "%s", token);
+
+    // Get payload before strtok use.
+    char *payload = NULL;
+
+    if (strcmp(tokens[0], "0") != 0)
+    {
+        payload = strstr(save, "\n\n");
+        char *payload_cpy = payload;
+        payload += 2;
+        asprintf(&payload, "%s", payload);
+
+        // Null terminate begining of payload in received data.
+        *payload_cpy = '\0';
+    }
+
+    // Save payload size, status and command.
+    for (int i = 1; i < 3; i++)
+    {
+        token = strtok_r(NULL, "\n", &save);
+        asprintf(&tokens[i], "%s", token);
+    }
+
+    // Get data parameters.
+    token = strtok_r(NULL, "\n", &save);
+    puts(token);
+    while (token)
+    {
+        tokens_count++;
+        tokens = xrealloc(tokens, tokens_count * sizeof(char *));
+        asprintf(&tokens[tokens_count], "%s", token);
+
+        token = strtok_r(NULL, "\n", &save);
+    }
+
+    // Add delimiter after parameters.
+    tokens[tokens_count - 1] = NULL;
+
+    if (payload)
+    {
+        tokens = xrealloc(tokens, tokens_count + 1);
+        memcpy(tokens[tokens_count], payload, atoll(tokens[0]));
+    }
+
+    return tokens;
 }
 
 // Parse response from server
@@ -86,17 +141,8 @@ void *parse_message(void *arg)
         }
         //Parsing message(s)
         //
-        ['4', '1', 'commande', 'par1', 'par2'..., NULL, 'payload']
-        char *token = NULL;
-        token = strtok(receive, "\n");
 
-        ssize_t payload_size = atoll(token);
-
-        token = strtok(NULL, "\n");
-        int status = atoi(token);
-
-        token = strtok(NULL, "\n");
-
+        /*
         switch (status)
         {
             case 1:
@@ -108,6 +154,7 @@ void *parse_message(void *arg)
             case 2:
 
         }
+        */
     }
     return NULL;
 }
@@ -126,6 +173,19 @@ void communicate(int server_socket)
         free(lineptr);
 }
 
+int main(void)
+{
+    // Copy only payoad_size data to payload side.
+    char test[] = "9\n2\nSEND-DM\nUser=acu\nFrom=ING1\n\n2022\n2021";
+
+    char **tokens = lexer(test);
+
+    for (int i = 0; i < 5; i++)
+    {
+        puts(tokens[i]);
+    }
+}
+/*
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -145,3 +205,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+*/
