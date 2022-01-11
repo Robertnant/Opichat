@@ -156,6 +156,7 @@ void *parse_message(void *arg)
             case 1:
                 if (tokens[0] != 0)
                 {
+                    puts("< ");
                     write(1, tokens[count - 1], atoi(tokens[0]));
                 }
                 break;
