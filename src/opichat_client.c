@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 int create_and_connect(struct addrinfo *addrinfo)
 {
@@ -60,29 +61,34 @@ void resend(const char *buff, size_t len, int fd)
 }
 
 // Reads response from server and prints to sdout
-void print_response(int fd)
+void *print_response(void *arg)
 {
+    int *fd = arg;
     char receive[DEFAULT_BUFFER_SIZE];
     ssize_t n;
 
     printf("Server answered with: ");
     fflush(stdout);
 
-    while ((n = recv(fd, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
+    while (42)
     {
-        // Prints server response to standard output till newline reached.
-        ssize_t l = 0;
-        while (l < n)
+        while ((n = recv(*fd, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
         {
-            ssize_t res = write(1, receive + l, n - l);
-
-            if (res == -1)
+            // Prints server response to standard output till newline reached.
+            ssize_t l = 0;
+            while (l < n)
             {
-                err(1, "failed to send data");
+                ssize_t res = write(1, receive + l, n - l);
+
+                if (res == -1)
+                {
+                    err(1, "failed to send data");
+                }
+                l += res;
             }
-            l += res;
         }
     }
+    return NULL;
 }
 
 void communicate(int server_socket)
@@ -94,7 +100,6 @@ void communicate(int server_socket)
            && (res = getline(&lineptr, &n, stdin)) != -1)
     {
         resend(lineptr, res, server_socket);
-        print_response(server_socket);
     }
     if (lineptr != NULL)
         free(lineptr);
@@ -110,6 +115,10 @@ int main(int argc, char **argv)
 
     // Make socket non blocking.
     fcntl(server_socket, F_SETFL, O_NONBLOCK);
+
+    pthread_t id;
+    void *arg = &server_socket;
+    pthread_create(&id, NULL, &print_response, arg);
 
     communicate(server_socket);
 
