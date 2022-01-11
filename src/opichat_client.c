@@ -60,32 +60,53 @@ void resend(const char *buff, size_t len, int fd)
     }
 }
 
-// Reads response from server and prints to sdout
-void *print_response(void *arg)
+char **lexer(char *receive)
+{
+
+}
+
+// Parse response from server
+void *parse_message(void *arg)
 {
     int *fd = arg;
-    char receive[DEFAULT_BUFFER_SIZE];
+    char *receive = xmalloc(sizeof(char) * DEFAULT_BUFFER_SIZE);
     ssize_t n;
+    ssize_t i = 0;
 
     printf("Server answered with: ");
     fflush(stdout);
 
     while (42)
     {
-        while ((n = recv(*fd, receive, DEFAULT_BUFFER_SIZE, 0)) != -1)
+        while ((n = recv(*fd, receive + i, DEFAULT_BUFFER_SIZE, 0)) != -1)
         {
-            // Prints server response to standard output till newline reached.
-            ssize_t l = 0;
-            while (l < n)
-            {
-                ssize_t res = write(1, receive + l, n - l);
+            // Realloc the size
+            i += n;
+            receive = xrealloc(receive, i);
+        }
+        //Parsing message(s)
+        //
+        ['4', '1', 'commande', 'par1', 'par2'..., NULL, 'payload']
+        char *token = NULL;
+        token = strtok(receive, "\n");
 
-                if (res == -1)
+        ssize_t payload_size = atoll(token);
+
+        token = strtok(NULL, "\n");
+        int status = atoi(token);
+
+        token = strtok(NULL, "\n");
+
+        switch (status)
+        {
+            case 1:
+                if (payload_size != 0)
                 {
-                    err(1, "failed to send data");
+                    '<'
                 }
-                l += res;
-            }
+                break;
+            case 2:
+
         }
     }
     return NULL;
