@@ -93,16 +93,25 @@ void *parse_message(void *arg)
                 int count = 0;
                 char **tokens = lexer(&next_message, &count);
 
+                char *payload = tokens[count - 1];
                 switch (atoi(tokens[1]))
                 {
                 case 1:
                     if (tokens[0] != 0)
                     {
                         write(1, "< ", strlen("< "));
-                        write(1, tokens[count - 1], atoi(tokens[0]));
+                        write(1, payload, atoi(tokens[0]));
                     }
                     break;
                 case 2:
+                    if (strcmp(tokens[2], "SEND-DM") == 0)
+                    {
+                        printf("From %s: %s\n", tokens[4], payload);
+                    }
+                    break;
+                case 3:
+                    write(2, "! ", strlen("! "));
+                    write(2, payload, atoi(tokens[0]));
                     break;
                 }
             }
