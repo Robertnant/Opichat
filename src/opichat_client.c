@@ -85,16 +85,13 @@ void *parse_message(void *arg)
         if (i != 0)
         {
             receive[i] = '\0';
+            char *next_message = receive;
 
             // Parsing message(s)
-            if (receive[0])
+            while (next_message[0])
             {
                 int count = 0;
-                char **tokens = lexer(&receive, &count);
-
-                // TODO Check if other commands were received in same buffer.
-                // if (receive)
-                //    puts("Next message received");
+                char **tokens = lexer(&next_message, &count);
 
                 switch (atoi(tokens[1]))
                 {

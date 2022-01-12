@@ -8,7 +8,8 @@
 /**
 ** \brief Tokenizer for message received from client or server.
 **
-** \param message Pointer to the message buffer.
+** \param message Pointer to the message buffer. Should not be the pointer
+** used in recv when listening for message.
 ** Update to next message by tokenizer.
 ** \param tokens_count Pointer to the tokens that will be set by lexer.
 ** Updated by tokenizer.
