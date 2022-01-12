@@ -184,7 +184,7 @@ void communicate(int server_socket)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        errx(1, "usage: ./opichat_client <ip> <port>");
+        errx(1, "usage: %s <ip> <port>", argv[0]);
 
     // Prepare socket and handle communication.
     int server_socket = prepare_socket(argv[1], argv[2]);

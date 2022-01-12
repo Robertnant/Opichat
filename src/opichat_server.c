@@ -270,7 +270,7 @@ struct connection_t *get_message(struct connection_t *connection, int connfd)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        errx(1, "usage: ./opichat_server <ip> <port>");
+        errx(1, "usage: %s <ip> <port>", argv[0]);
 
     // Get a listener socket for server.
     int listen_sock = prepare_socket(argv[1], argv[2]);
