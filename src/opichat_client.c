@@ -74,7 +74,7 @@ void *parse_message(void *arg)
     char *receive = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
     while (42)
     {
-        //test
+        // test
         receive = xrealloc(receive, DEFAULT_BUFFER_SIZE * sizeof(char));
         ssize_t i = 0;
         while ((n = recv(*fd, receive + i, DEFAULT_BUFFER_SIZE, 0)) != -1)
@@ -139,7 +139,11 @@ void communicate(int server_socket)
     ssize_t res;
     char *lineptr = NULL;
     size_t n = 0;
-    while ((res = getline(&lineptr, &n, stdin)) != -1)
+    char **commands = ["PING", "LOGIN", "LIST-USERS", "BROADCAST", 
+         "CREATE-ROOM", "LIST-ROOMS", "JOIN-ROOM", "LEAVE-ROOM", 
+         "DELETE-ROOM", "PROFILE"];
+    char **args_commands = ["SEND-DM", "SEND-ROOM" ];
+    while (puts("Command:") && (res = getline(&lineptr, &n, stdin)) != -1)
     {
         resend(lineptr, res, server_socket);
     }

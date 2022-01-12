@@ -1,6 +1,29 @@
 
+char *gen_message(size_t size, int status, char *command, 
+        struct params_payload *p)
+{
+    char *res = NULL;
+    size_t count = asprintf(&res, "%ld\n%d\n%s\n", size, status, command);
+    size_t i = 0;
+    while (p->params != NULL)
+    {
+        res = xrealloc(res, (count + strlen(p->params->value) + 2) * sizeof(char));
+        count += sprintf(&(res + count), "%s\n", p->params->value);
+        p->params = p->params->next;
+    }
+
+    count += sprintf(&(res + count), "\n");
+
+    if (p->payload != NULL)
+    {
+        res = xrealloc(res, (count + strlen(p->payload)) * sizeof(char));
+        count += sprintf(&(res + count), "%s", p->payload);
+    }
+    return res;
+}
+
 // Adds room to list and associates it with client connection.
-struct rooms *create_room(char *name, struct *rooms,
+struct queue *create_room(char *name, struct *queue,
                           struct connection_t *client)
 {
     // Create new element.
@@ -31,13 +54,13 @@ struct rooms *create_room(char *name, struct *rooms,
 }
 
 // Deletes room from list and removes room association from client connection.
-struct rooms *delete_room(char *name, int client_fd, struct *rooms rooms,
+struct queue *delete_room(char *name, int client_fd, struct *queue queue,
                           struct connection_t *connection)
 {
     // Find room with given name.
     int index = 0;
 
-    struct room *curr = rooms->head;
+    struct list *curr = queue->head;
 
     while (curr != NULL && strcmp(curr->name, name) != 0)
     {
@@ -67,7 +90,7 @@ struct rooms *delete_room(char *name, int client_fd, struct *rooms rooms,
             curr->next->prev = curr->prev;
 
         // Retrieve data and decrease size.
-        rooms->size -= 1;
+        queue->size -= 1;
 
         free(curr);
     }
@@ -83,16 +106,16 @@ struct rooms *delete_room(char *name, int client_fd, struct *rooms rooms,
         connection = connection->next;
     }
 
-    return rooms;
+    return queue;
 }
 
 // Creates list of created rooms and sends to client.
-void list_rooms(struct *rooms rooms, int client_fd)
+void list_queue(struct *queue queue, int client_fd)
 {
     char *rooms_list = NULL;
     size_t len = 0;
 
-    struct *room curr = rooms->head;
+    struct *list curr = rooms->head;
     while (curr != NULL)
     {
         // Gets name length including newline to separate names in list.
@@ -114,11 +137,11 @@ void list_rooms(struct *rooms rooms, int client_fd)
 }
 
 // Joins specified room if existing.
-struct rooms *join_room(char *name, int client_fd, struct *rooms rooms,
+struct queue *join_room(char *name, int client_fd, struct *queue queue,
                         struct connection_t *client)
 {
     // Check if room exists.
-    struct *room curr = rooms->head;
+    struct *room curr = queue->head;
     while (curr != NULL && strcmp(curr->name, name) != 0)
     {
         curr = curr->next;
