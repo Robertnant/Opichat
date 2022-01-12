@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "opichat_client.h"
 
 #include <err.h>
@@ -83,26 +85,29 @@ void *parse_message(void *arg)
         if (i != 0)
         {
             receive[i] = '\0';
+
             // Parsing message(s)
-            int count = 0;
-            char *next_message = NULL;
-            char **tokens = lexer(receive, &count, &next_message);
-
-            // TODO Check if other commands were received in same buffer.
-            if (next_message)
-                puts("Second message received");
-
-            switch (atoi(tokens[1]))
+            while (receive[0])
             {
-            case 1:
-                if (tokens[0] != 0)
+                int count = 0;
+                char **tokens = lexer(&receive, &count);
+
+                // TODO Check if other commands were received in same buffer.
+                if (receive)
+                    puts("Next message received");
+
+                switch (atoi(tokens[1]))
                 {
-                    write(1, "< ", strlen("< "));
-                    write(1, tokens[count - 1], atoi(tokens[0]));
+                case 1:
+                    if (tokens[0] != 0)
+                    {
+                        write(1, "< ", strlen("< "));
+                        write(1, tokens[count - 1], atoi(tokens[0]));
+                    }
+                    break;
+                case 2:
+                    break;
                 }
-                break;
-            case 2:
-                break;
             }
         }
     }
@@ -122,26 +127,34 @@ void communicate(int server_socket)
         free(lineptr);
 }
 
-/*
 int main(void)
 {
-    char str[] =
-"9\n2\nSEND-DM\nUser=acu\nFrom=Rob\n\n2021\n20228\n1\nSEND-DM\nUser=me\nFrom=Tom\n\n2022\n2023";
+    char *tmp = NULL;
+    asprintf(&tmp, "0\n2\nSEND-DM\nUser=acu\nFrom=Rob\n\n");
 
-    int count = 0;
-    char *next_message = NULL;
-    char **tokens = lexer(str, &count, &next_message);
-
-    for (int i = 0; i < count; i++)
+    char *str = tmp;
+    while (str[0])
     {
-        printf("Got: %s | Done\n", tokens[i]);
-    }
-    printf("Next message: %s\n", next_message);
+        printf("\nMessage: \n");
 
+        int count = 0;
+        char **tokens = lexer(&str, &count);
+
+        for (int i = 0; i < count; i++)
+        {
+            printf("Got: %s | Done\n", tokens[i]);
+            free(tokens[i]);
+        }
+
+        free(tokens);
+    }
+
+    free(tmp);
+    tmp = NULL;
     return 0;
 }
-*/
 
+/*
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -161,3 +174,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+*/

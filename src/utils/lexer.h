@@ -8,12 +8,12 @@
 /**
 ** \brief Tokenizer for message received from client or server.
 **
-** \param receive The message buffer.
+** \param message Pointer to the message buffer.
+** Update to next message by tokenizer.
 ** \param tokens_count Pointer to the tokens that will be set by lexer.
-** \param next_message Pointer to the next message received. Pointer is
-** updated by tokenizer.
+** Updated by tokenizer.
 ** \return An allocated array containing the message tokens.
 */
-char **lexer(char *receive, int *tokens_count, char **next_message);
+char **lexer(char **message, int *tokens_count);
 
 #endif /* !LEXER_H */
