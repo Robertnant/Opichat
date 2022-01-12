@@ -87,7 +87,7 @@ void *parse_message(void *arg)
             receive[i] = '\0';
 
             // Parsing message(s)
-            while (receive[0])
+            if (receive[0])
             {
                 int count = 0;
                 char **tokens = lexer(&receive, &count);
@@ -109,8 +109,6 @@ void *parse_message(void *arg)
                     break;
                 }
             }
-
-            free(receive);
         }
     }
     return NULL;
