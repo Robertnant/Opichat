@@ -71,9 +71,10 @@ void *parse_message(void *arg)
     int *fd = arg;
     ssize_t n;
 
+    char *receive = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
     while (42)
     {
-        char *receive = xrealloc(receive, DEFAULT_BUFFER_SIZE * sizeof(char));
+        receive = xrealloc(receive, DEFAULT_BUFFER_SIZE * sizeof(char));
         ssize_t i = 0;
         while ((n = recv(*fd, receive + i, DEFAULT_BUFFER_SIZE, 0)) != -1)
         {
