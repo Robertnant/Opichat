@@ -30,7 +30,7 @@ char **lexer(char **message, int *tokens_count)
         asprintf(&payload, "%s", payload);
 
         // Null terminate begining of payload in received data.
-        *payload_cpy = '\0';
+        *(payload_cpy - 2) = '\0';
     }
 
     // Save status and command.
