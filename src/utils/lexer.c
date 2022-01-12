@@ -17,20 +17,21 @@ char **lexer(char **message, int *tokens_count)
     token = strtok_r(receive, "\n", &save);
     asprintf(&tokens[0], "%s", token);
 
-    // Get payload before strtok use.
-    char *payload = strstr(save, "\n\n");
-    payload += 2;
-
     // Get pointer to next message command received.
-    char *next_message = payload + atoll(tokens[0]);
+    char *next_message = strstr(save, "\n\n") + 2 + atoll(tokens[0]);
+
+    // Get payload before strtok use.
+    char *payload = NULL;
 
     if (strcmp(tokens[0], "0") != 0)
     {
+        payload = strstr(save, "\n\n");
         char *payload_cpy = payload;
+        payload += 2;
         asprintf(&payload, "%s", payload);
 
         // Null terminate begining of payload in received data.
-        *(payload_cpy - 2) = '\0';
+        *payload_cpy = '\0';
     }
 
     // Save status and command.
@@ -57,7 +58,7 @@ char **lexer(char **message, int *tokens_count)
     tokens = xrealloc(tokens, *tokens_count * sizeof(char *));
     asprintf(&tokens[*tokens_count - 1], "%s", "");
 
-    if (payload[0])
+    if (payload)
     {
         size_t payload_size = atoll(tokens[0]);
         *tokens_count += 1;
@@ -65,7 +66,7 @@ char **lexer(char **message, int *tokens_count)
         tokens = xrealloc(tokens, *(tokens_count) * sizeof(char *));
         tokens[*tokens_count - 1] = xcalloc(payload_size + 1, sizeof(char));
         memcpy(tokens[*tokens_count - 1], payload, payload_size);
-        free(payload);
+        // free(payload);
     }
 
     // Update message pointer to next message.
