@@ -18,7 +18,7 @@ char **lexer(char **message, int *tokens_count)
     asprintf(&tokens[0], "%s", token);
 
     // Get pointer to next message command received.
-    char *next_message = strstr(save, "\n\n") + 2 + atoll(tokens[0]);
+    // char *next_message = strstr(save, "\n\n") + 2 + atoll(tokens[0]);
 
     // Get payload before strtok use.
     char *payload = NULL;
@@ -70,7 +70,7 @@ char **lexer(char **message, int *tokens_count)
     }
 
     // Update message pointer to next message.
-    *message = next_message;
+    // *message = next_message;
 
     return tokens;
 }
