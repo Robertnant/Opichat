@@ -11,6 +11,7 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
+#include "utils/lexer.h"
 #include "utils/xalloc.h"
 
 /**
@@ -183,12 +184,12 @@ void send_message(char *buffer, size_t len, int fd,
 struct connection_t *process_message(struct connection_t *client,
                                      struct connection_t *connection)
 {
+    // Try to tokenize received message. If fails then message is partial.
     // Get payload size. (use strtok_re with \n)
     char *token = NULL;
     token = strtok(client->buffer, "\n");
 
-    // TODO use atol if atoi not good enough.
-    ssize_t payload_size = atoi(token);
+    ssize_t payload_size = atoll(token);
 
     // Check if full message received (payload_size, len(payload_size), status).
     // TODO Find way to handle size of parameters.

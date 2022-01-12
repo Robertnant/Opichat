@@ -1,7 +1,7 @@
 
 // Adds room to list and associates it with client connection.
 struct rooms *create_room(char *name, struct *rooms,
-        struct connection_t *client)
+                          struct connection_t *client)
 {
     // Create new element.
     struct room *element = xmalloc(sizeof(struct room));
@@ -32,7 +32,7 @@ struct rooms *create_room(char *name, struct *rooms,
 
 // Deletes room from list and removes room association from client connection.
 struct rooms *delete_room(char *name, int client_fd, struct *rooms rooms,
-        struct connection_t *connection)
+                          struct connection_t *connection)
 {
     // Find room with given name.
     int index = 0;
@@ -115,7 +115,7 @@ void list_rooms(struct *rooms rooms, int client_fd)
 
 // Joins specified room if existing.
 struct rooms *join_room(char *name, int client_fd, struct *rooms rooms,
-        struct connection_t *client)
+                        struct connection_t *client)
 {
     // Check if room exists.
     struct *room curr = rooms->head;

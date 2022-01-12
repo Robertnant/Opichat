@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "opichat_client.h"
 
 #include <err.h>
@@ -9,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "utils/lexer.h"
 #include "utils/xalloc.h"
 
 int create_and_connect(struct addrinfo *addrinfo)
@@ -63,70 +63,6 @@ void resend(const char *buff, size_t len, int fd)
     }
 }
 
-// TODO Shorten code.
-// Creates tokens from parsed message and its count.
-char **lexer(char *receive, int *tokens_count)
-{
-    *tokens_count = 3;
-    char **tokens = xcalloc(*tokens_count, sizeof(char *));
-
-    char *token = NULL;
-    char *save = NULL;
-
-    token = strtok_r(receive, "\n", &save);
-    asprintf(&tokens[0], "%s", token);
-
-    // Get payload before strtok use.
-    char *payload = NULL;
-
-    if (strcmp(tokens[0], "0") != 0)
-    {
-        payload = strstr(save, "\n\n");
-        char *payload_cpy = payload;
-        payload += 2;
-        asprintf(&payload, "%s", payload);
-
-        // Null terminate begining of payload in received data.
-        *payload_cpy = '\0';
-    }
-
-    // Save payload size, status and command.
-    for (int i = 1; i < 3; i++)
-    {
-        token = strtok_r(NULL, "\n", &save);
-        asprintf(&tokens[i], "%s", token);
-    }
-
-    // Get data parameters.
-    token = strtok_r(NULL, "\n", &save);
-
-    while (token)
-    {
-        *tokens_count += 1;
-        tokens = xrealloc(tokens, *tokens_count * sizeof(char *));
-        asprintf(&tokens[*tokens_count - 1], "%s", token);
-
-        token = strtok_r(NULL, "\n", &save);
-    }
-
-    // Add delimiter after parameters.
-    *tokens_count += 1;
-    tokens = xrealloc(tokens, *tokens_count * sizeof(char *));
-    asprintf(&tokens[*tokens_count - 1], "%s", "");
-
-    if (payload)
-    {
-        size_t payload_size = atoll(tokens[0]);
-        *tokens_count += 1;
-
-        tokens = xrealloc(tokens, *(tokens_count) * sizeof(char *));
-        tokens[*tokens_count - 1] = xcalloc(payload_size + 1, sizeof(char));
-        memcpy(tokens[*tokens_count - 1], payload, payload_size);
-    }
-
-    return tokens;
-}
-
 // Parse response from server
 void *parse_message(void *arg)
 {
@@ -149,7 +85,12 @@ void *parse_message(void *arg)
             receive[i] = '\0';
             // Parsing message(s)
             int count = 0;
-            char **tokens = lexer(receive, &count);
+            char *next_message = NULL;
+            char **tokens = lexer(receive, &count, &next_message);
+
+            // TODO Check if other commands were received in same buffer.
+            if (next_message)
+                puts("Second message received");
 
             switch (atoi(tokens[1]))
             {
@@ -180,6 +121,26 @@ void communicate(int server_socket)
     if (lineptr != NULL)
         free(lineptr);
 }
+
+/*
+int main(void)
+{
+    char str[] =
+"9\n2\nSEND-DM\nUser=acu\nFrom=Rob\n\n2021\n20228\n1\nSEND-DM\nUser=me\nFrom=Tom\n\n2022\n2023";
+
+    int count = 0;
+    char *next_message = NULL;
+    char **tokens = lexer(str, &count, &next_message);
+
+    for (int i = 0; i < count; i++)
+    {
+        printf("Got: %s | Done\n", tokens[i]);
+    }
+    printf("Next message: %s\n", next_message);
+
+    return 0;
+}
+*/
 
 int main(int argc, char **argv)
 {

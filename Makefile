@@ -4,8 +4,10 @@ CFLAGS= -Werror -Wall -Wextra -pedantic -std=c99 -fsanitize=address \
 CPPFLAGS = -Isrc
 LDFLAGS = -lcriterion
 
-SERVER_SRC = ./src/opichat_server.c ./src/connection.c ./src/utils/xalloc.c
-CLIENT_SRC = ./src/opichat_client.c ./src/connection.c ./src/utils/xalloc.c
+SERVER_SRC = ./src/opichat_server.c ./src/connection.c ./src/utils/xalloc.c \
+	     ./src/utils/lexer.c
+CLIENT_SRC = ./src/opichat_client.c ./src/connection.c ./src/utils/xalloc.c \
+	     ./src/utils/lexer.c
 SERVER_BIN= opichat_server
 CLIENT_BIN= opichat_client
 
