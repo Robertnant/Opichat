@@ -24,7 +24,6 @@ char **lexer(char **message, int *tokens_count)
     // Get pointer to next message command received.
     char *next_message = payload + atoll(tokens[0]);
 
-    // Get pointer to next message.
     if (strcmp(tokens[0], "0") != 0)
     {
         char *payload_cpy = payload;
@@ -34,7 +33,7 @@ char **lexer(char **message, int *tokens_count)
         *payload_cpy = '\0';
     }
 
-    // Save payload size, status and command.
+    // Save status and command.
     for (int i = 1; i < 3; i++)
     {
         token = strtok_r(NULL, "\n", &save);
