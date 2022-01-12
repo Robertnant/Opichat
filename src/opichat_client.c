@@ -109,6 +109,8 @@ void *parse_message(void *arg)
                     break;
                 }
             }
+
+            free(receive);
         }
     }
     return NULL;
@@ -131,7 +133,7 @@ void communicate(int server_socket)
 int main(void)
 {
     char *tmp = NULL;
-    asprintf(&tmp, "0\n2\nSEND-DM\nUser=acu\nFrom=Rob\n\n");
+    asprintf(&tmp, "13\n1\nDELETE-ROOM\n\nRoom Deleted\n");
 
     char *str = tmp;
     while (str[0])
