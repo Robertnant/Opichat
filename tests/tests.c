@@ -84,3 +84,8 @@ Test(BROADCAST, broadcast, .init = redirect_all_stdout)
     char *expected;
     cr_assert_stdout_eq_str(expected);
 }
+
+Test(CLIENT, response, .init = redirect_all_stdout)
+{
+    char test[] = "9\n0\nSEND-DM\nUser=acu\nFrom=ING1\n\n2022\n2021";
+}

@@ -12,6 +12,8 @@ struct connection_t
 
     char *username; /**< username of the client */
 
+    char *room; /**< room associated to client */
+
     char *buffer; /**< buffer containing all the data received by this client */
 
     ssize_t nb_read; /**< number of bytes read (also size of the buffer) */

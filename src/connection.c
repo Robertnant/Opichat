@@ -13,6 +13,7 @@ struct connection_t *add_client(struct connection_t *connection,
 
     new_connection->client_socket = client_socket;
     new_connection->username = NULL;
+    new_connection->room = NULL;
     new_connection->buffer = NULL;
     new_connection->nb_read = 0;
     new_connection->next = connection;
@@ -29,6 +30,7 @@ struct connection_t *remove_client(struct connection_t *connection,
         if (close(connection->client_socket) == -1)
             errx(1, "Failed to close socket");
         free(connection->username);
+        free(connection->room);
         free(connection->buffer);
         free(connection);
         return client_connection;
@@ -44,6 +46,7 @@ struct connection_t *remove_client(struct connection_t *connection,
             if (close(client_connection->client_socket) == -1)
                 errx(1, "Failed to close socket");
             free(client_connection->username);
+            free(client_connection->room);
             free(client_connection->buffer);
             free(client_connection);
             break;
