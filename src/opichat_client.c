@@ -127,6 +127,7 @@ void communicate(int server_socket)
         free(lineptr);
 }
 
+/*
 int main(void)
 {
     char *tmp = NULL;
@@ -153,8 +154,8 @@ int main(void)
     tmp = NULL;
     return 0;
 }
+*/
 
-/*
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -174,4 +175,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-*/
