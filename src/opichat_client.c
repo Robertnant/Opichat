@@ -106,7 +106,19 @@ void *parse_message(void *arg)
                 case 2:
                     if (strcmp(tokens[2], "SEND-DM") == 0)
                     {
-                        printf("From %s: %s\n", tokens[4], payload);
+                        tokens[4][4] = ' ';
+                        printf("%s: %s\n", tokens[4], payload);
+                    }
+                    if (strcmp(tokens[2], "BROADCAST") == 0)
+                    {
+                        tokens[3][4] = ' ';
+                        printf("%s: %s\n", tokens[3], payload);
+                    }
+                    if (strcmp(tokens[2], "SEND-ROOM") == 0)
+                    {
+                        tokens[4][4] = ' ';
+                        tokens[3] += 5;
+                        printf("%s@%s: %s\n", tokens[4], tokens[3], payload);
                     }
                     break;
                 case 3:
