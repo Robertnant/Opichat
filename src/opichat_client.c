@@ -139,10 +139,25 @@ void communicate(int server_socket)
     ssize_t res;
     char *lineptr = NULL;
     size_t n = 0;
-    char **commands = ["PING", "LOGIN", "LIST-USERS", "BROADCAST", 
-         "CREATE-ROOM", "LIST-ROOMS", "JOIN-ROOM", "LEAVE-ROOM", 
-         "DELETE-ROOM", "PROFILE"];
-    char **args_commands = ["SEND-DM", "SEND-ROOM" ];
+    while ((res = getline(&lineptr, &n, stdin)) != -1)
+    {
+        resend(lineptr, res, server_socket);
+    }
+    if (lineptr != NULL)
+        free(lineptr);
+}
+
+/*
+void communicate(int server_socket)
+{
+    ssize_t res;
+    char *lineptr = NULL;
+    size_t n = 0;
+    char **commands = [
+        "PING", "LOGIN", "LIST-USERS", "BROADCAST", "CREATE-ROOM", "LIST-ROOMS",
+        "JOIN-ROOM", "LEAVE-ROOM", "DELETE-ROOM", "PROFILE"
+    ];
+    char **args_commands = ["SEND-DM", "SEND-ROOM"];
     while (puts("Command:") && (res = getline(&lineptr, &n, stdin)) != -1)
     {
         resend(lineptr, res, server_socket);
@@ -150,6 +165,7 @@ void communicate(int server_socket)
     if (lineptr != NULL)
         free(lineptr);
 }
+*/
 
 /*
 int main(void)
