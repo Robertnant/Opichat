@@ -1,3 +1,6 @@
+#ifndef TOOLS_H
+#define TOOLS_H
+
 // List of rooms ordered in first in first out order.
 struct list
 {
@@ -46,5 +49,7 @@ struct queue *join_room(char *name, int client_fd, struct *queue queue,
                         struct connection_t *client);
 
 // Generate message
-char *gen_message(size_t size, int status, char *command, 
-        struct params_payload *p);
+char *gen_message(size_t size, int status, char *command,
+                  struct params_payload *p);
+
+#endif /* TOOLS_H */

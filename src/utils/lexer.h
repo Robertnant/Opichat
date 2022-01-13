@@ -13,7 +13,8 @@
 ** Update to next message by tokenizer.
 ** \param tokens_count Pointer to the tokens that will be set by lexer.
 ** Updated by tokenizer.
-** \return An allocated array containing the message tokens.
+** \return An allocated array containing the message tokens or NULL if message
+** is partial.
 */
 char **lexer(char **message, int *tokens_count);
 

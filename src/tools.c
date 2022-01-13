@@ -1,13 +1,15 @@
+#include "tool.h"
 
-char *gen_message(size_t size, int status, char *command, 
-        struct params_payload *p)
+char *gen_message(size_t size, int status, char *command,
+                  struct params_payload *p)
 {
     char *res = NULL;
     size_t count = asprintf(&res, "%ld\n%d\n%s\n", size, status, command);
     size_t i = 0;
     while (p->params != NULL)
     {
-        res = xrealloc(res, (count + strlen(p->params->value) + 2) * sizeof(char));
+        res = xrealloc(res,
+                       (count + strlen(p->params->value) + 2) * sizeof(char));
         count += sprintf(&(res + count), "%s\n", p->params->value);
         p->params = p->params->next;
     }

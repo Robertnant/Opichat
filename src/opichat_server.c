@@ -184,55 +184,52 @@ void send_message(char *buffer, size_t len, int fd,
 struct connection_t *process_message(struct connection_t *client,
                                      struct connection_t *connection)
 {
-    // Try to tokenize received message. If fails then message is partial.
-    // Get payload size. (use strtok_re with \n)
-    char *token = NULL;
-    token = strtok(client->buffer, "\n");
+    // Tokenize and parse each message.
+    int count = 0;
+    char *next_message = client->buffer;
 
-    ssize_t payload_size = atoll(token);
-
-    // Check if full message received (payload_size, len(payload_size), status).
-    // TODO Find way to handle size of parameters.
-    if (client->nb_read < payload_size)
+    while (next_message)
     {
-        printf("Waiting for full message of fd: %d\n", client->client_socket);
-        return connection;
-    }
+        char **tokens = lexer(&next_message, &count);
 
-    // Get status code (one byte).
-    token = strtok(NULL, "\n");
-    int status = atoi(token);
+        if (tokens == NULL)
+            return connection;
 
-    if (status != 0)
-        puts("invalid request");
+        // Check for invalid request.
+        if (tokens[1] != 0)
+        {
+            // Send an invalid request message.
+            // Might need to use a pointer to error code as parameter to set
+            // error code for message parser.
+            puts("invalid request");
+        }
 
-    // Use switch to determine which command was received.
-    token = strtok(NULL, "\n");
+        char *command = tokens[2];
 
-    // TODO Find empty newline "\n\n" to get to payload
-    // for messages with parameters.
-    if (strcmp(token, "PING") == 0)
-    {
-        char *pong = "5\n1\nPING\n\nPONG\n";
-        send_message(pong, strlen(pong), client->client_socket, connection);
-    }
-    else if (strcmp(token, "LOGIN") == 0)
-    {
-        token = strtok(NULL, "\n");
-        asprintf(&(client->username), "%s", token);
-        char *response = "10\n1\nLOGIN\n\nLogged in\n";
-        send_message(response, strlen(response), client->client_socket,
-                     connection);
-    }
-    else if (strcmp(token, "LIST-USERS") == 0)
-    {}
-    else if (strcmp(token, "SEND-DM") == 0)
-    {
-        // handle_param;
-    }
-    else if (strcmp(token, "BROADCAST") == 0)
-    {
-        // handle_param;
+        if (strcmp(command, "PING") == 0)
+        {
+            char *pong = "5\n1\nPING\n\nPONG\n";
+            send_message(pong, strlen(pong), client->client_socket, connection);
+        }
+        else if (strcmp(command, "LOGIN") == 0)
+        {
+            asprintf(&(client->username), "%s", tokens[count - 1]);
+            char *response = "10\n1\nLOGIN\n\nLogged in\n";
+            send_message(response, strlen(response), client->client_socket,
+                         connection);
+        }
+        else if (strcmp(command, "LIST-USERS") == 0)
+        {
+            // Create a payload with usernames and generate message.
+        }
+        else if (strcmp(command, "SEND-DM") == 0)
+        {
+            // handle_param;
+        }
+        else if (strcmp(command, "BROADCAST") == 0)
+        {
+            // handle_param;
+        }
     }
 
     return connection;
@@ -258,9 +255,11 @@ struct connection_t *get_message(struct connection_t *connection, int connfd)
     }
     else
     {
-        client->buffer = xrealloc(client->buffer, client->nb_read + n);
+        // Realloc buffer and NULL terminate for parsing.
+        client->buffer = xrealloc(client->buffer, client->nb_read + n + 1);
         memcpy(client->buffer + client->nb_read, received, n);
         client->nb_read += n;
+        client->buffer[client->nb_read] = '\0';
 
         connection = process_message(client, connection);
     }

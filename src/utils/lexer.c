@@ -17,12 +17,22 @@ char **lexer(char **message, int *tokens_count)
     token = strtok_r(receive, "\n", &save);
     asprintf(&tokens[0], "%s", token);
 
-    // Get payload before strtok use.
+    // Get payload to prevent making next message unusable.
+    size_t payload_size = atoll(tokens[0]);
     char *payload = strstr(save, "\n\n");
-    payload += 2;
+    payload = payload ? payload + 2 : payload;
+
+    // Check if message received is partial.
+    if (payload == NULL || strlen(payload) < payload_size)
+    {
+        free(tokens[0]);
+        free(tokens);
+
+        return NULL;
+    }
 
     // Get pointer to next message command received.
-    char *next_message = payload + atoll(tokens[0]);
+    char *next_message = payload + payload_size;
 
     if (strcmp(tokens[0], "0") != 0)
     {
@@ -59,7 +69,6 @@ char **lexer(char **message, int *tokens_count)
 
     if (payload[0])
     {
-        size_t payload_size = atoll(tokens[0]);
         *tokens_count += 1;
 
         tokens = xrealloc(tokens, *(tokens_count) * sizeof(char *));
