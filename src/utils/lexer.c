@@ -82,3 +82,27 @@ char **lexer(char **message, int *tokens_count)
 
     return tokens;
 }
+
+char *gen_message(size_t size, int status, char *command,
+                  struct params_payload *p)
+{
+    char *res = NULL;
+    size_t count = sprintf(res, "%ld\n%d\n%s\n", size, status, command);
+
+    while (p->params != NULL)
+    {
+        res =
+            xrealloc(res, (count + strlen(p->params->name) + 2) * sizeof(char));
+        count += sprintf(res + count, "%s\n", p->params->name);
+        p->params = p->params->next;
+    }
+
+    count += sprintf(res + count, "\n");
+
+    if (p->payload != NULL)
+    {
+        res = xrealloc(res, (count + strlen(p->payload)) * sizeof(char));
+        count += sprintf(res + count, "%s", p->payload);
+    }
+    return res;
+}

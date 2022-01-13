@@ -5,6 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "tools.h"
+
+// Structure to store payload and parameters.
+struct params_payload
+{
+    char *payload;
+    struct list *params;
+};
+
 /**
 ** \brief Tokenizer for message received from client or server.
 **
@@ -18,4 +27,7 @@
 */
 char **lexer(char **message, int *tokens_count);
 
+// Generates messages ready to be sent to server or client.
+char *gen_message(size_t size, int status, char *command,
+                  struct params_payload *p);
 #endif /* !LEXER_H */

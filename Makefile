@@ -5,7 +5,7 @@ CPPFLAGS = -Isrc
 LDFLAGS = -lcriterion
 
 SERVER_SRC = ./src/opichat_server.c ./src/connection.c ./src/utils/xalloc.c \
-	     ./src/utils/lexer.c
+	     ./src/utils/lexer.c ./src/utils/tools.c
 CLIENT_SRC = ./src/opichat_client.c ./src/connection.c ./src/utils/xalloc.c \
 	     ./src/utils/lexer.c
 SERVER_BIN= opichat_server
