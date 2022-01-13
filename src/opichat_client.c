@@ -109,18 +109,28 @@ void *parse_message(void *arg)
                     if (strcmp(tokens[2], "SEND-DM") == 0)
                     {
                         tokens[4][4] = ' ';
-                        printf("%s: %s\n", tokens[4], payload);
+                        // Utiliser write
+                        char *res = NULL;
+                        size_t len =
+                            asprintf(&res, "%s: %s\n", tokens[4], payload);
+                        write(1, res, len);
                     }
                     if (strcmp(tokens[2], "BROADCAST") == 0)
                     {
                         tokens[3][4] = ' ';
-                        printf("%s: %s\n", tokens[3], payload);
+                        char *res = NULL;
+                        size_t len =
+                            asprintf(&res, "%s: %s\n", tokens[3], payload);
+                        write(1, res, len);
                     }
                     if (strcmp(tokens[2], "SEND-ROOM") == 0)
                     {
                         tokens[4][4] = ' ';
                         tokens[3] += 5;
-                        printf("%s@%s: %s\n", tokens[4], tokens[3], payload);
+                        char *res = NULL;
+                        size_t len = asprintf(&res, "%s@%s: %s\n", tokens[4],
+                                              tokens[3], payload);
+                        write(1, res, len);
                     }
                     break;
                 case 3:
