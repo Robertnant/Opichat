@@ -188,7 +188,7 @@ struct connection_t *process_message(struct connection_t *client,
     int count = 0;
     char *next_message = client->buffer;
 
-    while (next_message)
+    while (next_message[0])
     {
         char **tokens = lexer(&next_message, &count);
 
@@ -196,7 +196,7 @@ struct connection_t *process_message(struct connection_t *client,
             return connection;
 
         // Check for invalid request.
-        if (tokens[1] != 0)
+        if (strcmp(tokens[1], "0") != 0)
         {
             // Send an invalid request message.
             // Might need to use a pointer to error code as parameter to set
@@ -230,6 +230,17 @@ struct connection_t *process_message(struct connection_t *client,
         {
             // handle_param;
         }
+
+        // TODO Free tokens array.
+    }
+
+    // Reset client buffer if parsing successful (tokens created at least once).
+
+    if (count != 0)
+    {
+        client->nb_read = 0;
+        free(client->buffer);
+        client->buffer = NULL;
     }
 
     return connection;
