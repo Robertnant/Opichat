@@ -21,8 +21,7 @@ struct queue *init_queue(void)
 }
 
 // Adds room to list and associates it with client connection.
-struct queue *create_room(char *name, struct queue *rooms,
-                          struct connection_t *client)
+char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     // Create new element.
     struct list *element = xmalloc(sizeof(struct list));
@@ -50,12 +49,12 @@ struct queue *create_room(char *name, struct queue *rooms,
 
     asprintf(&(client->room), "%s", name);
 
-    return rooms;
+    return gen_message(...);
 }
 
 // Deletes room from list and removes room association from clients.
-struct queue *delete_room(char *name, int client_fd, struct queue *rooms,
-                          struct connection_t *connection)
+char *delete_room(char *name, int client_fd, struct queue *rooms,
+                  struct connection_t *connection)
 {
     // Find room with given name.
     struct list *curr = rooms->head;
@@ -76,8 +75,7 @@ struct queue *delete_room(char *name, int client_fd, struct queue *rooms,
         // Check if owner matches current client.
         if (client_fd != curr->owner)
         {
-            gen_message(...);
-            return rooms;
+            return gen_message(...);
         }
 
         if (curr == rooms->head)
@@ -105,9 +103,7 @@ struct queue *delete_room(char *name, int client_fd, struct queue *rooms,
         connection = connection->next;
     }
 
-    gen_message(...);
-
-    return rooms;
+    return gen_message(...);
 }
 
 // Creates list of created rooms and generates response message.
@@ -139,7 +135,7 @@ char *list_rooms(struct queue *rooms)
 }
 
 // Joins specified room if existing.
-void join_room(char *name, struct queue *rooms, struct connection_t *client)
+char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     // Check if room exists.
     struct list *curr = rooms->head;
@@ -157,4 +153,6 @@ void join_room(char *name, struct queue *rooms, struct connection_t *client)
         free(client->room);
 
     asprintf(&(client->room), "%s", name);
+
+    return gen_message(...);
 }
