@@ -49,7 +49,8 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    return gen_message(...);
+    // return gen_message(...);
+    return NULL;
 }
 
 // Deletes room from list and removes room association from clients.
@@ -75,7 +76,8 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         // Check if owner matches current client.
         if (client_fd != curr->owner)
         {
-            return gen_message(...);
+            // return gen_message(...);
+            return NULL;
         }
 
         if (curr == rooms->head)
@@ -103,7 +105,8 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         connection = connection->next;
     }
 
-    return gen_message(...);
+    // return gen_message(...);
+    return NULL;
 }
 
 // Creates list of created rooms and generates response message.
@@ -154,5 +157,6 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    return gen_message(...);
+    // return gen_message(...);
+    return NULL;
 }

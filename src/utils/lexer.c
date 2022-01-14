@@ -83,16 +83,27 @@ char **lexer(char **message, int *tokens_count)
     return tokens;
 }
 
+// Adds parameter to parameters list (order does not matter).
+struct list *add_param(struct list *params, char *key, char *value)
+{
+    struct list *new = xcalloc(1, sizeof(struct list));
+    asprintf(&(new->name), "%s=%s", key, value);
+
+    new->next = params;
+
+    return new;
+}
+
 char *gen_message(size_t size, int status, char *command,
                   struct params_payload *p)
 {
     char *res = NULL;
-    size_t count = sprintf(res, "%ld\n%d\n%s\n", size, status, command);
+    size_t count = asprintf(&res, "%ld\n%d\n%s\n", size, status, command);
 
     while (p->params != NULL)
     {
         res =
-            xrealloc(res, (count + strlen(p->params->name) + 2) * sizeof(char));
+            xrealloc(res, (count + strlen(p->params->name) + 3) * sizeof(char));
         count += sprintf(res + count, "%s\n", p->params->name);
         p->params = p->params->next;
     }
@@ -101,7 +112,7 @@ char *gen_message(size_t size, int status, char *command,
 
     if (p->payload != NULL)
     {
-        res = xrealloc(res, (count + strlen(p->payload)) * sizeof(char));
+        res = xrealloc(res, (count + strlen(p->payload) + 1) * sizeof(char));
         count += sprintf(res + count, "%s", p->payload);
     }
     return res;

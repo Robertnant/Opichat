@@ -180,28 +180,17 @@ void communicate(int server_socket)
 /*
 int main(void)
 {
-    char *tmp = NULL;
-    asprintf(&tmp, "13\n1\nDELETE-ROOM\n\nRoom Deleted\n");
+    struct params_payload *p = xcalloc(1,sizeof(struct params_payload));
 
-    char *str = tmp;
-    while (str[0])
-    {
-        printf("\nMessage: \n");
+    p->params = add_param(p->params, "User", "Robert");
+    p->params = add_param(p->params, "From", "Clarel");
+    p->params = add_param(p->params, "Big", "Drip");
+    size_t size = asprintf(&p->payload, "Fre sh avacado");
 
-        int count = 0;
-        char **tokens = lexer(&str, &count);
+    char *message = gen_message(size, 0, "SEND-DM", p);
 
-        for (int i = 0; i < count; i++)
-        {
-            printf("Got: %s | Done\n", tokens[i]);
-            free(tokens[i]);
-        }
+    write(1, message, strlen(message));
 
-        free(tokens);
-    }
-
-    free(tmp);
-    tmp = NULL;
     return 0;
 }
 */
