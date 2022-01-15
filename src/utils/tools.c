@@ -143,6 +143,8 @@ char *list_rooms(struct queue *rooms)
 
         // Add newline.
         rooms_list[len - 1] = '\n';
+
+        curr = curr->next;
     }
 
     // Create payload data structure with NULL parameters.
