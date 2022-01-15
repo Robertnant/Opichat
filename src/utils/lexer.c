@@ -103,11 +103,12 @@ char *gen_message(size_t size, int status, char *command,
     while (p->params != NULL)
     {
         res =
-            xrealloc(res, (count + strlen(p->params->name) + 3) * sizeof(char));
+            xrealloc(res, (count + strlen(p->params->name) + 1) * sizeof(char));
         count += sprintf(res + count, "%s\n", p->params->name);
         p->params = p->params->next;
     }
 
+    res = xrealloc(res, count + 2);
     count += sprintf(res + count, "\n");
 
     if (size)
