@@ -148,7 +148,7 @@ char *list_rooms(struct queue *rooms)
     }
 
     // Add null termination.
-    if (rooms_list)
+    if (len)
         rooms_list[len] = '\0';
 
     // Create payload data structure with NULL parameters.
