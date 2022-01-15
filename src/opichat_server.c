@@ -296,7 +296,7 @@ struct connection_t *process_message(struct connection_t *client,
             if (strcmp(tokens[count - 1], "") == 0
                 || !is_valid(tokens[count - 1]))
             {
-                asprintf(&response, "13\n3\nCREATE-ROOM\n\nBad room name\n");
+                asprintf(&response, "14\n3\nCREATE-ROOM\n\nBad room name\n");
             }
             else
             {
