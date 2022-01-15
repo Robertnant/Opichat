@@ -47,6 +47,8 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 // Removes room association from client.
 char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
 {
+    char *response = NULL;
+
     // Find room with given name.
     struct list *curr = rooms->head;
 
@@ -58,15 +60,14 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
     if (curr == NULL)
     {
         // Error handling.
+        asprintf(&response, "15\n3\nLEAVE-ROOM\n\nRoom not found\n");
     }
     else
     {
         free(client->room);
         client->room = NULL;
+        asprintf(&response, "10\n1\nLEAVE-ROOM\n\nRoom left\n");
     }
-
-    char *response = NULL;
-    asprintf(&response, "10\n1\nLEAVE-ROOM\n\nRoom left\n");
 
     return response;
 }
@@ -75,6 +76,8 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
 char *delete_room(char *name, int client_fd, struct queue *rooms,
                   struct connection_t *connection)
 {
+    char *response = NULL;
+
     // Find room with given name.
     struct list *curr = rooms->head;
     struct list *prev = NULL;
@@ -88,14 +91,16 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
     if (curr == NULL)
     {
         // Error handling.
+        asprintf(&response, "15\n1\nDELETE-ROOM\n\nRoom not found\n");
+        return response;
     }
     else
     {
         // Check if owner matches current client.
         if (client_fd != curr->owner)
         {
-            // return gen_message(...);
-            return NULL;
+            asprintf(&response, "13\n1\nDELETE-ROOM\n\nUnauthorized\n");
+            return response;
         }
 
         if (curr == rooms->head)
@@ -123,7 +128,6 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         connection = connection->next;
     }
 
-    char *response = NULL;
     asprintf(&response, "13\n1\nDELETE-ROOM\n\nRoom deleted\n");
 
     return response;
