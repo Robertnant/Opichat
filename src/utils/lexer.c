@@ -83,6 +83,22 @@ char **lexer(char **message, int *tokens_count)
     return tokens;
 }
 
+// Checks if parameter or payload is valid. Returns 1 if valid else 0.
+int is_valid(char *element)
+{
+    size_t i = 0;
+    while (element[i])
+    {
+        int cond1 = element[i] >= 'a' && element[i] <= 'z';
+        int cond2 = element[i] >= 'A' && element[i] <= 'Z';
+        int cond3 = element[i] >= '0' && element[i] <= '9';
+
+        if (!cond1 && !cond2 && !cond3)
+            return 0;
+    }
+
+    return 1;
+}
 // Adds parameter to parameters list (order does not matter).
 struct list *add_param(struct list *params, char *key, char *value)
 {

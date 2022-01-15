@@ -207,8 +207,31 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "LOGIN") == 0)
         {
-            asprintf(&(client->username), "%s", tokens[count - 1]);
-            asprintf(&response, "10\n1\nLOGIN\n\nLogged in\n");
+            if (strcmp(tokens[count - 1], "") == 0
+                || !is_valid(tokens[count - 1]))
+            {
+                asprintf(&response, "13\n3\nLOGIN\n\nBad username\n");
+            }
+            else
+            {
+                struct connection_t *curr = connection;
+                while (curr)
+                {
+                    if (strcmp(curr->username, tokens[count - 1]) == 0)
+                    {
+                        asprintf(&response,
+                                 "19\n1\nLOGIN\n\nDuplicate username\n");
+                    }
+
+                    break;
+                }
+
+                if (!curr)
+                {
+                    asprintf(&(client->username), "%s", tokens[count - 1]);
+                    asprintf(&response, "10\n1\nLOGIN\n\nLogged in\n");
+                }
+            }
         }
         else if (strcmp(command, "LIST-USERS") == 0)
         {

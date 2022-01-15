@@ -30,6 +30,9 @@ char **lexer(char **message, int *tokens_count);
 // Adds parameter to parameters list (order does not matter).
 struct list *add_param(struct list *params, char *key, char *value);
 
+// Checks if parameter or payload is valid. Returns 1 if valid else 0.
+int is_valid(char *element);
+
 // Generates messages ready to be sent to server or client.
 char *gen_message(size_t size, int status, char *command,
                   struct params_payload *p);
