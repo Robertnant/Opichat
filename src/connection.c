@@ -30,7 +30,10 @@ struct connection_t *remove_client(struct connection_t *connection,
         if (close(connection->client_socket) == -1)
             errx(1, "Failed to close socket");
         free(connection->username);
-        free(connection->room);
+
+        if (connection->room)
+            free(connection->room);
+
         free(connection->buffer);
         free(connection);
         return client_connection;

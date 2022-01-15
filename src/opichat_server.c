@@ -376,6 +376,8 @@ struct connection_t *get_message(struct connection_t *connection, int connfd,
         else
             puts("Client disconnected");
 
+        // Delete room associated to client and remove client.
+        delete_room(client->room, connfd, rooms, connection);
         connection = remove_client(connection, connfd);
     }
     else
