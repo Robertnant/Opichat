@@ -148,7 +148,8 @@ char *list_rooms(struct queue *rooms)
     }
 
     // Add null termination.
-    rooms_list[len] = '\0';
+    if (rooms_list)
+        rooms_list[len] = '\0';
 
     // Create payload data structure with NULL parameters.
     struct params_payload *data = xcalloc(1, sizeof(struct params_payload));
