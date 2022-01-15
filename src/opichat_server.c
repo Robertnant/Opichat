@@ -172,9 +172,9 @@ void send_message(char *buffer, size_t len, int fd,
     }
 }
 
-// TODO
 struct connection_t *process_message(struct connection_t *client,
-        struct connection_t *connection, struct queue *rooms)
+                                     struct connection_t *connection,
+                                     struct queue *rooms)
 {
     // Tokenize and parse each message.
     int count = 0;
@@ -182,9 +182,10 @@ struct connection_t *process_message(struct connection_t *client,
 
     while (next_message[0])
     {
-        struct payload_params *p = xcalloc(1, sizeof(struct payload_params));
+        struct params_payload *p = xcalloc(1, sizeof(struct params_payload));
 
         char **tokens = lexer(&next_message, &count);
+        char *response = NULL;
 
         if (tokens == NULL)
             return connection;
@@ -202,15 +203,12 @@ struct connection_t *process_message(struct connection_t *client,
 
         if (strcmp(command, "PING") == 0)
         {
-            char pong = "5\n1\nPING\n\nPONG\n";
-            send_message(pong, strlen(pong), client->client_socket, connection);
+            asprintf(&response, "5\n1\nPING\n\nPONG\n");
         }
         else if (strcmp(command, "LOGIN") == 0)
         {
             asprintf(&(client->username), "%s", tokens[count - 1]);
-            char *response = "10\n1\nLOGIN\n\nLogged in\n";
-            send_message(response, strlen(response), client->client_socket,
-                         connection);
+            asprintf(&response, "10\n1\nLOGIN\n\nLogged in\n");
         }
         else if (strcmp(command, "LIST-USERS") == 0)
         {
@@ -232,9 +230,7 @@ struct connection_t *process_message(struct connection_t *client,
 
             p->payload = users;
 
-            char *response = gen_message(len, 1, "LIST-USERS", p);
-            send_message(response, strlen(response), client->client_socket,
-                         connection);
+            response = gen_message(len, 1, "LIST-USERS", p);
         }
         else if (strcmp(command, "SEND-DM") == 0)
         {
@@ -247,41 +243,36 @@ struct connection_t *process_message(struct connection_t *client,
         else if (strcmp(command, "CREATE-ROOM") == 0)
         {
             // TODO: client can be subscribed to multiple rooms.
-            char *response = add_room(tokens[count - 1], atoll(tokens[0]),
-                    rooms, client);
-            send_message(response, strlen(response), client->client_socket,
-                    connection);
+            response = add_room(tokens[count - 1], rooms, client);
         }
         else if (strcmp(command, "LIST-ROOMS") == 0)
         {
-            char *response = list_rooms(rooms);
-            send_message(response, strlen(response), client->client_socket,
-                    connection);
+            response = list_rooms(rooms);
         }
         else if (strcmp(command, "JOIN-ROOM") == 0)
         {
-            char *response = join_room(rooms);
-            send_message(response, strlen(response), client->client_socket,
-                    connection);
+            response = join_room(tokens[count - 1], rooms, client);
         }
         else if (strcmp(command, "LEAVE-ROOM") == 0)
         {
-            char *response = leave_room(rooms);
-            send_message(response, strlen(response), client->client_socket,
-                    connection);
+            response = leave_room(tokens[count - 1], rooms, client);
         }
         else if (strcmp(command, "SEND-ROOM") == 0)
-        {
-        }
+        {}
         else if (strcmp(command, "DELETE-ROOM") == 0)
         {
+            response = delete_room(tokens[count - 1], client->client_socket,
+                                   rooms, connection);
         }
         else if (strcmp(command, "PROFILE") == 0)
-        {
-        }
+        {}
 
+        // Send and free response.
+        send_message(response, strlen(response), client->client_socket,
+                     connection);
+        free(response);
         // TODO move send_message lines to end of if/else to refactor code.
-        // TODO Free tokens array and created payload.
+        // TODO Free tokens array and created params payload structure.
     }
 
     // Reset client buffer if parsing successful (tokens created at least once).
@@ -296,8 +287,8 @@ struct connection_t *process_message(struct connection_t *client,
 }
 
 // Reads incoming message from client and processes it.
-struct connection_t *get_message(struct connection_t *connection,
-        int connfd, struct queue *rooms)
+struct connection_t *get_message(struct connection_t *connection, int connfd,
+                                 struct queue *rooms)
 {
     char received[DEFAULT_BUFFER_SIZE];
     struct connection_t *client = find_client(connection, connfd);
@@ -397,8 +388,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                connection = get_message(connection,
-                        events[event_idx].data.fd, rooms);
+                connection =
+                    get_message(connection, events[event_idx].data.fd, rooms);
             }
         }
     }

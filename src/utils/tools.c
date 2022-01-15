@@ -43,9 +43,8 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
     return response;
 }
 
-// Deletes room from list and removes room association from clients.
-char *leave_room(char *name, struct connection_t *client, struct queue *rooms,
-        struct connection_t *connection)
+// Removes room association from client.
+char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     // Find room with given name.
     struct list *curr = rooms->head;
@@ -122,8 +121,9 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         connection = connection->next;
     }
 
-    // return gen_message(...);
-    return NULL;
+    char *response = "13\n1\nDELETE-ROOM\n\nRoom deleted\n";
+
+    return response;
 }
 
 // Creates list of created rooms and generates response message.
