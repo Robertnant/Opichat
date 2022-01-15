@@ -110,9 +110,9 @@ char *gen_message(size_t size, int status, char *command,
 
     count += sprintf(res + count, "\n");
 
-    if (p->payload != NULL)
+    if (size)
     {
-        res = xrealloc(res, (count + strlen(p->payload) + 1) * sizeof(char));
+        res = xrealloc(res, (count + size + 1) * sizeof(char));
         count += sprintf(res + count, "%s", p->payload);
     }
     return res;

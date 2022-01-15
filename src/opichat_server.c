@@ -173,16 +173,8 @@ void send_message(char *buffer, size_t len, int fd,
 }
 
 // TODO
-// Step 1: act as if server will only receive one client command at a time.
-
-// Step 2: Handle invalid requests.
-
-// Step 3: Handle case where multiple commands received (process commands till
-// last newline found in buffer.
-// Read Beej's guide in case of doubt.
-
 struct connection_t *process_message(struct connection_t *client,
-                                     struct connection_t *connection)
+        struct connection_t *connection, struct queue *rooms)
 {
     // Tokenize and parse each message.
     int count = 0;
@@ -190,6 +182,8 @@ struct connection_t *process_message(struct connection_t *client,
 
     while (next_message[0])
     {
+        struct payload_params *p = xcalloc(1, sizeof(struct payload_params));
+
         char **tokens = lexer(&next_message, &count);
 
         if (tokens == NULL)
@@ -208,7 +202,7 @@ struct connection_t *process_message(struct connection_t *client,
 
         if (strcmp(command, "PING") == 0)
         {
-            char *pong = "5\n1\nPING\n\nPONG\n";
+            char pong = "5\n1\nPING\n\nPONG\n";
             send_message(pong, strlen(pong), client->client_socket, connection);
         }
         else if (strcmp(command, "LOGIN") == 0)
@@ -221,21 +215,76 @@ struct connection_t *process_message(struct connection_t *client,
         else if (strcmp(command, "LIST-USERS") == 0)
         {
             // Create a payload with usernames and generate message.
+            char *users = NULL;
+            size_t len = 0;
+
+            struct connection_t *curr = connection;
+            while (curr)
+            {
+                if (curr->username)
+                {
+                    users = xrealloc(users, len + strlen(curr->username) + 2);
+                    len += sprintf(users + len, "%s\n", curr->username);
+                }
+
+                curr = curr->next;
+            }
+
+            p->payload = users;
+
+            char *response = gen_message(len, 1, "LIST-USERS", p);
+            send_message(response, strlen(response), client->client_socket,
+                         connection);
         }
         else if (strcmp(command, "SEND-DM") == 0)
         {
-            // handle_param;
+            // handle response and notification
         }
         else if (strcmp(command, "BROADCAST") == 0)
         {
-            // handle_param;
+            // handle response and notification
+        }
+        else if (strcmp(command, "CREATE-ROOM") == 0)
+        {
+            // TODO: client can be subscribed to multiple rooms.
+            char *response = add_room(tokens[count - 1], atoll(tokens[0]),
+                    rooms, client);
+            send_message(response, strlen(response), client->client_socket,
+                    connection);
+        }
+        else if (strcmp(command, "LIST-ROOMS") == 0)
+        {
+            char *response = list_rooms(rooms);
+            send_message(response, strlen(response), client->client_socket,
+                    connection);
+        }
+        else if (strcmp(command, "JOIN-ROOM") == 0)
+        {
+            char *response = join_room(rooms);
+            send_message(response, strlen(response), client->client_socket,
+                    connection);
+        }
+        else if (strcmp(command, "LEAVE-ROOM") == 0)
+        {
+            char *response = leave_room(rooms);
+            send_message(response, strlen(response), client->client_socket,
+                    connection);
+        }
+        else if (strcmp(command, "SEND-ROOM") == 0)
+        {
+        }
+        else if (strcmp(command, "DELETE-ROOM") == 0)
+        {
+        }
+        else if (strcmp(command, "PROFILE") == 0)
+        {
         }
 
-        // TODO Free tokens array.
+        // TODO move send_message lines to end of if/else to refactor code.
+        // TODO Free tokens array and created payload.
     }
 
     // Reset client buffer if parsing successful (tokens created at least once).
-
     if (count != 0)
     {
         client->nb_read = 0;
@@ -247,7 +296,8 @@ struct connection_t *process_message(struct connection_t *client,
 }
 
 // Reads incoming message from client and processes it.
-struct connection_t *get_message(struct connection_t *connection, int connfd)
+struct connection_t *get_message(struct connection_t *connection,
+        int connfd, struct queue *rooms)
 {
     char received[DEFAULT_BUFFER_SIZE];
     struct connection_t *client = find_client(connection, connfd);
@@ -272,10 +322,21 @@ struct connection_t *get_message(struct connection_t *connection, int connfd)
         client->nb_read += n;
         client->buffer[client->nb_read] = '\0';
 
-        connection = process_message(client, connection);
+        connection = process_message(client, connection, rooms);
     }
 
     return connection;
+}
+
+// Returns a new initialized queue list.
+struct queue *init_queue(void)
+{
+    struct queue *list = xmalloc(sizeof(struct queue));
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+
+    return list;
 }
 
 int main(int argc, char **argv)
@@ -303,6 +364,9 @@ int main(int argc, char **argv)
     // Event structure passed indicates that only input events will be handled.
     if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, listen_sock, &event) == -1)
         err(1, "failed to add listener socket to epoll instance");
+
+    // Initialize rooms structure.
+    struct queue *rooms = init_queue();
 
     // Wait indefinitely for an event to occur.
     struct connection_t *connection = NULL;
@@ -333,7 +397,8 @@ int main(int argc, char **argv)
             }
             else
             {
-                connection = get_message(connection, events[event_idx].data.fd);
+                connection = get_message(connection,
+                        events[event_idx].data.fd, rooms);
             }
         }
     }

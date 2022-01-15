@@ -19,9 +19,6 @@ struct queue
     size_t size;
 };
 
-// Returns a new initialized queue list.
-struct queue *init_queue(void);
-
 // Adds room to list and associates it with client connection.
 char *add_room(char *name, struct queue *rooms, struct connection_t *client);
 

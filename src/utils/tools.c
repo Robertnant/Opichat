@@ -9,24 +9,13 @@
 #include "lexer.h"
 #include "xalloc.h"
 
-// Returns a new initialized queue list.
-struct queue *init_queue(void)
-{
-    struct queue *list = xmalloc(sizeof(struct queue));
-    list->head = NULL;
-    list->tail = NULL;
-    list->size = 0;
-
-    return list;
-}
-
 // Adds room to list and associates it with client connection.
 char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     // Create new element.
     struct list *element = xmalloc(sizeof(struct list));
     element->owner = client->client_socket;
-    asprintf(&name, "%s", name);
+    asprintf(&element->name, "%s", name);
     element->next = NULL;
 
     // Handle case for empty rooms list.
@@ -49,8 +38,36 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    // return gen_message(...);
-    return NULL;
+    char *response = "13\n1\nCREATE-ROOM\n\nRoom created\n";
+
+    return response;
+}
+
+// Deletes room from list and removes room association from clients.
+char *leave_room(char *name, struct connection_t *client, struct queue *rooms,
+        struct connection_t *connection)
+{
+    // Find room with given name.
+    struct list *curr = rooms->head;
+
+    while (curr != NULL && strcmp(curr->name, name) != 0)
+    {
+        curr = curr->next;
+    }
+
+    if (curr == NULL)
+    {
+        // Error handling.
+    }
+    else
+    {
+        free(client->room);
+        client->room = NULL;
+    }
+
+    char *response = "10\n1\nLEAVE-ROOM\n\nRoom left\n";
+
+    return response;
 }
 
 // Deletes room from list and removes room association from clients.
@@ -157,6 +174,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    // return gen_message(...);
-    return NULL;
+    char *response = "12\n1\nJOIN-ROOM\n\nRoom joined\n";
+
+    return response;
 }
