@@ -172,6 +172,39 @@ void send_message(char *buffer, size_t len, int fd,
     }
 }
 
+// Finds user or room with specified name. One structure parameter should be
+// NULL while the other not. If both NULL returns NULL.
+void *find_element(struct connection_t *connection, struct queue *rooms,
+                   char *name)
+{
+    if (rooms != NULL)
+    {
+        struct list *curr = rooms->head;
+
+        while (curr)
+        {
+            if (strcmp(curr->name, name) == 0)
+                return curr;
+
+            curr = curr->next;
+        }
+    }
+    else if (connection != NULL)
+    {
+        struct connection_t *curr = connection;
+
+        while (curr)
+        {
+            if (strcmp(curr->username, name) == 0)
+                return curr;
+
+            curr = curr->next;
+        }
+    }
+
+    return NULL;
+}
+
 struct connection_t *process_message(struct connection_t *client,
                                      struct connection_t *connection,
                                      struct queue *rooms)
@@ -214,19 +247,14 @@ struct connection_t *process_message(struct connection_t *client,
             }
             else
             {
-                struct connection_t *curr = connection;
-                while (curr)
+                struct connection_t *el =
+                    find_element(connection, NULL, tokens[count - 1]);
+
+                if (el)
                 {
-                    if (strcmp(curr->username, tokens[count - 1]) == 0)
-                    {
-                        asprintf(&response,
-                                 "19\n1\nLOGIN\n\nDuplicate username\n");
-                    }
-
-                    break;
+                    asprintf(&response, "19\n3\nLOGIN\n\nDuplicate username\n");
                 }
-
-                if (!curr)
+                else
                 {
                     asprintf(&(client->username), "%s", tokens[count - 1]);
                     asprintf(&response, "10\n1\nLOGIN\n\nLogged in\n");
@@ -265,8 +293,24 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "CREATE-ROOM") == 0)
         {
-            // TODO: client can be subscribed to multiple rooms.
-            response = add_room(tokens[count - 1], rooms, client);
+            if (strcmp(tokens[count - 1], "") == 0
+                || !is_valid(tokens[count - 1]))
+            {
+                asprintf(&response, "13\n3\nLOGIN\n\nBad room name\n");
+            }
+            else
+            {
+                struct list *el = find_element(NULL, rooms, tokens[count - 1]);
+                if (el)
+                {
+                    asprintf(&response,
+                             "30\n3\nCREATE-ROOM\n\nDuplicate room name\n");
+                }
+                else
+                {
+                    response = add_room(tokens[count - 1], rooms, client);
+                }
+            }
         }
         else if (strcmp(command, "LIST-ROOMS") == 0)
         {
