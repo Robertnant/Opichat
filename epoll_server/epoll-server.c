@@ -221,8 +221,7 @@ int main(int argc, char **argv)
     // Get a listener socket for server.
     int listen_sock = prepare_socket(argv[1], argv[2]);
 
-    // Create an epoll instance (file descriptor) and add listening socket to
-    // set.
+    // Create an epoll instance and add listening socket to set.
     struct epoll_event event;
 
     int epoll_instance = epoll_create1(0);
@@ -235,7 +234,6 @@ int main(int argc, char **argv)
     event.data.fd = listen_sock;
 
     // Add listener socket fd to new epoll instance.
-    // Event structure passed indicates that only input events will be handled.
     if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, listen_sock, &event) == -1)
         err(1, "failed to add listener socket to epoll instance");
 
@@ -245,12 +243,9 @@ int main(int argc, char **argv)
     while (1)
     {
         // Create list for events that will occur from epoll instance
-        // (ready list).
         struct epoll_event events[MAX_EVENTS];
 
         // Wait for events on given file descriptors.
-        // events_count represents number of file descriptors on which
-        // an event occured (ready file descriptors).
         int events_count = epoll_wait(epoll_instance, events, MAX_EVENTS, -1);
 
         if (events_count == -1)

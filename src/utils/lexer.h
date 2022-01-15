@@ -36,4 +36,8 @@ int is_valid(char *element);
 // Generates messages ready to be sent to server or client.
 char *gen_message(size_t size, int status, char *command,
                   struct params_payload *p);
+
+// Fres params_payload structure.
+void free_payload(struct params_payload *p);
+
 #endif /* !LEXER_H */

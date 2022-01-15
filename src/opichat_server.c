@@ -272,8 +272,16 @@ struct connection_t *process_message(struct connection_t *client,
             {
                 if (curr->username)
                 {
-                    users = xrealloc(users, len + strlen(curr->username) + 2);
-                    len += sprintf(users + len, "%s\n", curr->username);
+                    // Prepend username to result.
+                    size_t user_len = strlen(curr->username);
+
+                    users = xrealloc(users, len + user_len + 2);
+                    memmove(users + user_len + 1, users, len);
+                    memcpy(users, curr->username, user_len);
+                    users[user_len] = '\n';
+
+                    len += user_len + 1;
+                    users[len] = '\0';
                 }
 
                 curr = curr->next;
@@ -342,10 +350,10 @@ struct connection_t *process_message(struct connection_t *client,
             free(response);
         }
 
-        // if (response)
-        //    free(response);
-        // TODO move send_message lines to end of if/else to refactor code.
-        // TODO Free tokens array and created params payload structure.
+        free_payload(p);
+        p = NULL;
+
+        // TODO Free tokens array.
     }
 
     // Reset client buffer if parsing successful (tokens created at least once).

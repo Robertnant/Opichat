@@ -136,3 +136,28 @@ char *gen_message(size_t size, int status, char *command,
     }
     return res;
 }
+
+// Fres params_payload structure.
+void free_payload(struct params_payload *p)
+{
+    if (!p)
+        return;
+
+    if (p->payload)
+        free(p->payload);
+
+    struct list *curr = p->params;
+    struct list *next = NULL;
+
+    while (curr)
+    {
+        next = curr->next;
+
+        free(curr->name);
+        free(curr);
+
+        curr = next;
+    }
+
+    free(p);
+}
