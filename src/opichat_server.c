@@ -271,8 +271,8 @@ struct connection_t *process_message(struct connection_t *client,
         send_message(response, strlen(response), client->client_socket,
                      connection);
 
-        if (response)
-            free(response);
+        // if (response)
+        //    free(response);
         // TODO move send_message lines to end of if/else to refactor code.
         // TODO Free tokens array and created params payload structure.
     }

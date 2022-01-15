@@ -149,7 +149,7 @@ char *list_rooms(struct queue *rooms)
     struct params_payload *data = xcalloc(1, sizeof(struct params_payload));
     data->payload = rooms_list;
 
-    char *message = gen_message(len, 1, "LIST_ROOMS", data);
+    char *message = gen_message(len, 1, "LIST-ROOMS", data);
 
     return message;
 }
