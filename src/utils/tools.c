@@ -120,7 +120,7 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
     // Remove room from all client connections.
     while (connection != NULL)
     {
-        if (strcmp(connection->room, name) == 0)
+        if (connection->room && strcmp(connection->room, name) == 0)
         {
             free(connection->room);
             connection->room = NULL;
