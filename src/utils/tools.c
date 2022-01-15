@@ -137,7 +137,7 @@ char *list_rooms(struct queue *rooms)
     {
         // Gets name length including newline to separate names in list.
         size_t name_len = strlen(curr->name) + 1;
-        rooms_list = xrealloc(rooms_list, len + name_len);
+        rooms_list = xrealloc(rooms_list, len + name_len + 1);
         memcpy(rooms_list + len, curr->name, name_len);
         len += name_len;
 
@@ -146,6 +146,9 @@ char *list_rooms(struct queue *rooms)
 
         curr = curr->next;
     }
+
+    // Add null termination.
+    rooms_list[len] = '\0';
 
     // Create payload data structure with NULL parameters.
     struct params_payload *data = xcalloc(1, sizeof(struct params_payload));
