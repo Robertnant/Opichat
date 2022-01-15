@@ -167,6 +167,8 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
     if (curr == NULL)
     {
         // Error handling.
+        char *response = "15\n3\nJOIN-ROOM\n\nRoom not found\n";
+        return response;
     }
 
     if (client->room)
