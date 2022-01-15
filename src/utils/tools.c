@@ -114,6 +114,8 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
 
         rooms->size -= 1;
 
+        free(curr->name);
+        curr->name = NULL;
         free(curr);
     }
 
