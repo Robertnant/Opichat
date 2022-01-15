@@ -38,7 +38,8 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    char *response = "13\n1\nCREATE-ROOM\n\nRoom created\n";
+    char *response = NULL;
+    asprintf(&response, "13\n1\nCREATE-ROOM\n\nRoom created\n");
 
     return response;
 }
@@ -64,7 +65,8 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
         client->room = NULL;
     }
 
-    char *response = "10\n1\nLEAVE-ROOM\n\nRoom left\n";
+    char *response = NULL;
+    asprintf(&response, "10\n1\nLEAVE-ROOM\n\nRoom left\n");
 
     return response;
 }
@@ -121,7 +123,8 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         connection = connection->next;
     }
 
-    char *response = "13\n1\nDELETE-ROOM\n\nRoom deleted\n";
+    char *response = NULL;
+    asprintf(&response, "13\n1\nDELETE-ROOM\n\nRoom deleted\n");
 
     return response;
 }
@@ -163,6 +166,8 @@ char *list_rooms(struct queue *rooms)
 // Joins specified room if existing.
 char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 {
+    char *response = NULL;
+
     // Check if room exists.
     struct list *curr = rooms->head;
     while (curr != NULL && strcmp(curr->name, name) != 0)
@@ -173,7 +178,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
     if (curr == NULL)
     {
         // Error handling.
-        char *response = "15\n3\nJOIN-ROOM\n\nRoom not found\n";
+        asprintf(&response, "15\n3\nJOIN-ROOM\n\nRoom not found\n");
         return response;
     }
 
@@ -182,7 +187,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 
     asprintf(&(client->room), "%s", name);
 
-    char *response = "12\n1\nJOIN-ROOM\n\nRoom joined\n";
+    asprintf(&response, "12\n1\nJOIN-ROOM\n\nRoom joined\n");
 
     return response;
 }
