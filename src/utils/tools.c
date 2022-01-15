@@ -36,7 +36,7 @@ char *add_room(char *name, struct queue *rooms, struct connection_t *client)
     if (client->room)
         free(client->room);
 
-    asprintf(&(client->room), "%s", name);
+    asprintf(&client->room, "%s", name);
 
     char *response = NULL;
     asprintf(&response, "13\n1\nCREATE-ROOM\n\nRoom created\n");
@@ -94,41 +94,45 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         asprintf(&response, "15\n1\nDELETE-ROOM\n\nRoom not found\n");
         return response;
     }
-    else
+
+    // Check if owner matches current client.
+    if (client_fd != curr->owner)
     {
-        // Check if owner matches current client.
-        if (client_fd != curr->owner)
-        {
-            asprintf(&response, "13\n1\nDELETE-ROOM\n\nUnauthorized\n");
-            return response;
-        }
-
-        if (curr == rooms->head)
-            rooms->head = curr->next;
-
-        if (curr == rooms->tail)
-            rooms->tail = prev;
-
-        if (prev)
-            prev->next = curr->next;
-
-        rooms->size -= 1;
-
-        free(curr->name);
-        curr->name = NULL;
-        free(curr);
+        asprintf(&response, "13\n1\nDELETE-ROOM\n\nUnauthorized\n");
+        return response;
     }
+
+    // Create copy of room name to prevent heap use after free.
+    char *room_name = NULL;
+    asprintf(&room_name, "%s", name);
+
+    if (curr == rooms->head)
+        rooms->head = curr->next;
+
+    if (curr == rooms->tail)
+        rooms->tail = prev;
+
+    if (prev)
+        prev->next = curr->next;
+
+    rooms->size -= 1;
+
+    free(curr->name);
+    curr->name = NULL;
+    free(curr);
 
     // Remove room from all client connections.
     while (connection != NULL)
     {
-        if (connection->room && strcmp(connection->room, name) == 0)
+        if (connection->room && strcmp(connection->room, room_name) == 0)
         {
             free(connection->room);
             connection->room = NULL;
         }
         connection = connection->next;
     }
+
+    free(room_name);
 
     asprintf(&response, "13\n1\nDELETE-ROOM\n\nRoom deleted\n");
 
