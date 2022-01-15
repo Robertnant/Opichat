@@ -91,14 +91,14 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
     if (curr == NULL)
     {
         // Error handling.
-        asprintf(&response, "15\n1\nDELETE-ROOM\n\nRoom not found\n");
+        asprintf(&response, "15\n3\nDELETE-ROOM\n\nRoom not found\n");
         return response;
     }
 
     // Check if owner matches current client.
     if (client_fd != curr->owner)
     {
-        asprintf(&response, "13\n1\nDELETE-ROOM\n\nUnauthorized\n");
+        asprintf(&response, "13\n3\nDELETE-ROOM\n\nUnauthorized\n");
         return response;
     }
 
