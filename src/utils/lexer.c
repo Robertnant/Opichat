@@ -95,6 +95,8 @@ int is_valid(char *element)
 
         if (!cond1 && !cond2 && !cond3)
             return 0;
+
+        i++;
     }
 
     return 1;

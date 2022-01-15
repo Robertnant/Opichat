@@ -195,7 +195,7 @@ void *find_element(struct connection_t *connection, struct queue *rooms,
 
         while (curr)
         {
-            if (strcmp(curr->username, name) == 0)
+            if (curr->username && strcmp(curr->username, name) == 0)
                 return curr;
 
             curr = curr->next;
