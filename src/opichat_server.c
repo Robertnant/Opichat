@@ -335,8 +335,12 @@ struct connection_t *process_message(struct connection_t *client,
         {}
 
         // Send and free response.
-        send_message(response, strlen(response), client->client_socket,
-                     connection);
+        if (response)
+        {
+            send_message(response, strlen(response), client->client_socket,
+                         connection);
+            free(response);
+        }
 
         // if (response)
         //    free(response);
