@@ -1,11 +1,11 @@
 #define _GNU_SOURCE
 
 #include "lexer.h"
-
 #include "xalloc.h"
 
 // Generates response/notification/error by readding previous client params.
-char *generate_response(char **tokens, int count, struct params_payload *p, int status)
+char *generate_response(char **tokens, int count, struct params_payload *p,
+                        int status)
 {
     int end = count - 2;
     if (strcmp(tokens[count - 1], "") == 0)

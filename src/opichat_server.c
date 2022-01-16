@@ -427,7 +427,6 @@ struct connection_t *process_message(struct connection_t *client,
                 asprintf(&p->payload, "Room joined\n");
                 response = generate_response(tokens, count, p, 1);
             }
-
         }
         else if (strcmp(command, "LEAVE-ROOM") == 0)
         {
@@ -447,7 +446,7 @@ struct connection_t *process_message(struct connection_t *client,
         else if (strcmp(command, "DELETE-ROOM") == 0)
         {
             int err = delete_room(tokens[count - 1], client->client_socket,
-                    rooms, connection);
+                                  rooms, connection);
             if (err)
             {
                 if (err == 1)
@@ -476,15 +475,14 @@ struct connection_t *process_message(struct connection_t *client,
             {
                 if (client->username)
                 {
-                    asprintf(&p->payload,
-                            "Username: %s\nIP: %s\nRooms:\n%s",
-                            client->username, client->ip, data);
+                    asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n%s",
+                             client->username, client->ip, data);
                 }
                 else
                 {
                     asprintf(&p->payload,
-                            "Username: <Anonymous>\nIP: %s\nRooms:\n%s",
-                            client->ip, data);
+                             "Username: <Anonymous>\nIP: %s\nRooms:\n%s",
+                             client->ip, data);
                 }
             }
             else
@@ -492,13 +490,13 @@ struct connection_t *process_message(struct connection_t *client,
                 if (client->username)
                 {
                     asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n",
-                            client->username, client->ip);
+                             client->username, client->ip);
                 }
                 else
                 {
                     asprintf(&p->payload,
-                            "Username: <Anonymous>\nIP: %s\nRooms:\n",
-                            client->ip);
+                             "Username: <Anonymous>\nIP: %s\nRooms:\n",
+                             client->ip);
                 }
             }
 
@@ -558,7 +556,7 @@ struct connection_t *get_message(struct connection_t *connection, int connfd,
             if (curr->owner == client->client_socket)
             {
                 delete_room(curr->name, client->client_socket, rooms,
-                        connection);
+                            connection);
             }
             else
             {

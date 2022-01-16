@@ -100,7 +100,7 @@ int leave_room(char *name, struct queue *rooms, struct connection_t *client)
 
 // Deletes room from list and removes room association from clients.
 int delete_room(char *name, int client_fd, struct queue *rooms,
-                  struct connection_t *connection)
+                struct connection_t *connection)
 {
     char *response = NULL;
 

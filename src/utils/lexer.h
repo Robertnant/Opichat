@@ -41,8 +41,8 @@ char *gen_message(size_t size, int status, char *command,
                   struct params_payload *p);
 
 // Creates response messages by first adding previous request parameters.
-char *generate_response(char **tokens, int count,
-        struct params_payload *p, int status);
+char *generate_response(char **tokens, int count, struct params_payload *p,
+                        int status);
 
 // Fres params_payload structure.
 void free_payload(struct params_payload *p);
