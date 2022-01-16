@@ -213,7 +213,17 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
         return response;
     }
 
-    push_element(name, client->client_socket, client->rooms);
+    // Check if room already joined by client.
+    curr = client->rooms->head;
+    while (curr != NULL && strcmp(curr->name, name) != 0)
+    {
+        curr = curr->next;
+    }
+
+    if (curr == NULL)
+    {
+        push_element(name, client->client_socket, client->rooms);
+    }
 
     asprintf(&response, "12\n1\nJOIN-ROOM\n\nRoom joined\n");
 
