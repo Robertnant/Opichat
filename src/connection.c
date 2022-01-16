@@ -58,7 +58,7 @@ struct connection_t *remove_client(struct connection_t *connection,
             if (client_connection->rooms)
                 free(client_connection->rooms);
 
-            free(connection->ip);
+            free(client_connection->ip);
             free(client_connection->buffer);
             free(client_connection);
             break;

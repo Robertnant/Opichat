@@ -154,10 +154,7 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
         }
 
         if (curr)
-        {
             unlink_element(curr, prev, connection->rooms);
-            break;
-        }
 
         connection = connection->next;
     }
