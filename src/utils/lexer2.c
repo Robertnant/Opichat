@@ -12,7 +12,7 @@ char *generate_response(char **tokens, int count, struct params_payload *p,
         end++;
 
     // With index, no parameter is added if command does not take any.
-    for (int i = 3; i <= end; i++)
+    for (int i = 3; i < end; i++)
     {
         p->params = add_param(p->params, tokens[i], NULL);
     }

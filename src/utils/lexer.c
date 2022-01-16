@@ -126,12 +126,12 @@ char *gen_message(size_t size, int status, char *command,
     char *res = NULL;
     size_t count = asprintf(&res, "%ld\n%d\n%s\n", size, status, command);
 
-    while (p->params != NULL)
+    struct list *curr = p->params;
+    while (curr != NULL)
     {
-        res =
-            xrealloc(res, (count + strlen(p->params->name) + 2) * sizeof(char));
-        count += sprintf(res + count, "%s\n", p->params->name);
-        p->params = p->params->next;
+        res = xrealloc(res, (count + strlen(curr->name) + 2) * sizeof(char));
+        count += sprintf(res + count, "%s\n", curr->name);
+        curr = curr->next;
     }
 
     res = xrealloc(res, count + 2);
