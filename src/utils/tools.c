@@ -194,13 +194,7 @@ char *list_rooms(struct queue *rooms)
     if (len)
         rooms_list[len] = '\0';
 
-    // Create payload data structure with NULL parameters.
-    struct params_payload *data = xcalloc(1, sizeof(struct params_payload));
-    data->payload = rooms_list;
-
-    char *message = gen_message(len, 1, "LIST-ROOMS", data);
-
-    return message;
+    return rooms_list;
 }
 
 // Joins specified room if existing.

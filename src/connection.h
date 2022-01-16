@@ -16,6 +16,8 @@ struct connection_t
 
     char *buffer; /**< buffer containing all the data received by this client */
 
+    char *ip; /**< ip address of client */
+
     ssize_t nb_read; /**< number of bytes read (also size of the buffer) */
 
     struct connection_t *next; /**< next connection_t for another client */
@@ -33,7 +35,7 @@ struct connection_t
  * Add the new connection_t element with a head insert
  */
 struct connection_t *add_client(struct connection_t *connection,
-                                int client_socket);
+                                int client_socket, char *ip);
 
 /**
  * \brief Remove the client connection_t from the linked list connection

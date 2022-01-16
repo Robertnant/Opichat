@@ -145,7 +145,12 @@ struct connection_t *accept_client(int epoll_instance, int server_socket,
         }
         else
         {
-            connection = add_client(connection, connfd);
+            // Get IP address of client.
+            char ip[DEFAULT_BUFFER_SIZE]; // to a
+            getnameinfo(&client, connfd_len, ip, DEFAULT_BUFFER_SIZE, NULL, 0,
+                        NI_NUMERICHOST);
+
+            connection = add_client(connection, connfd, ip);
             connection->rooms = init_queue();
             puts("Client connected");
         }
@@ -336,7 +341,10 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "LIST-ROOMS") == 0)
         {
-            response = list_rooms(rooms);
+            char *rooms_list = list_rooms(rooms);
+            size_t len = rooms_list ? strlen(rooms_list) : 0;
+            p->payload = rooms_list;
+            response = gen_message(len, 1, "LIST-ROOMS", p);
         }
         else if (strcmp(command, "JOIN-ROOM") == 0)
         {
@@ -354,7 +362,24 @@ struct connection_t *process_message(struct connection_t *client,
                                    rooms, connection);
         }
         else if (strcmp(command, "PROFILE") == 0)
-        {}
+        {
+            // Create payload.
+            char *data = list_rooms(client->rooms);
+            size_t len = 0;
+
+            if (data)
+            {
+                len = asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n%s",
+                               client->username, client->ip, data);
+            }
+            else
+            {
+                len = asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n",
+                               client->username, client->ip);
+            }
+
+            response = gen_message(len, 1, "PROFILE", p);
+        }
 
         // Send and free response.
         if (response)

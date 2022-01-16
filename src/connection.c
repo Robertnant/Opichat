@@ -1,13 +1,16 @@
+#define _GNU_SOURCE
+
 #include "connection.h"
 
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "utils/xalloc.h"
 
 struct connection_t *add_client(struct connection_t *connection,
-                                int client_socket)
+                                int client_socket, char *ip)
 {
     struct connection_t *new_connection = xmalloc(sizeof(struct connection_t));
 
@@ -15,6 +18,7 @@ struct connection_t *add_client(struct connection_t *connection,
     new_connection->username = NULL;
     new_connection->rooms = NULL;
     new_connection->buffer = NULL;
+    asprintf(&new_connection->ip, "%s", ip);
     new_connection->nb_read = 0;
     new_connection->next = connection;
 
@@ -34,6 +38,7 @@ struct connection_t *remove_client(struct connection_t *connection,
         if (connection->rooms)
             free(connection->rooms);
 
+        free(connection->ip);
         free(connection->buffer);
         free(connection);
         return client_connection;
@@ -53,6 +58,7 @@ struct connection_t *remove_client(struct connection_t *connection,
             if (client_connection->rooms)
                 free(client_connection->rooms);
 
+            free(connection->ip);
             free(client_connection->buffer);
             free(client_connection);
             break;
