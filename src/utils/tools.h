@@ -20,19 +20,19 @@ struct queue
 };
 
 // Adds room to list and associates it with client connection.
-char *add_room(char *name, struct queue *rooms, struct connection_t *client);
+void add_room(char *name, struct queue *rooms, struct connection_t *client);
 
-// Deletes room from list and removes room association from clients.
-char *leave_room(char *name, struct queue *rooms, struct connection_t *client);
+// Removes room association from client.
+int leave_room(char *name, struct queue *rooms, struct connection_t *client);
 
 // Deletes room from list and removes room association from client connection.
-char *delete_room(char *name, int client_fd, struct queue *rooms,
+int delete_room(char *name, int client_fd, struct queue *rooms,
                   struct connection_t *connection);
 
 // Creates list of created rooms and sends to client.
 char *list_rooms(struct queue *rooms);
 
 // Joins specified room if existing.
-char *join_room(char *name, struct queue *rooms, struct connection_t *client);
+int join_room(char *name, struct queue *rooms, struct connection_t *client);
 
 #endif /* TOOLS_H */

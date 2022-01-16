@@ -53,21 +53,16 @@ void unlink_element(struct list *curr, struct list *prev, struct queue *queue)
 }
 
 // Adds room to list and associates it with client connection.
-char *add_room(char *name, struct queue *rooms, struct connection_t *client)
+void add_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     push_element(name, client->client_socket, rooms);
 
     // Associate room to current client.
     push_element(name, client->client_socket, client->rooms);
-
-    char *response = NULL;
-    asprintf(&response, "13\n1\nCREATE-ROOM\n\nRoom created\n");
-
-    return response;
 }
 
-// Removes room association from client.
-char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
+// Removes room association from client. Error code is 1.
+int leave_room(char *name, struct queue *rooms, struct connection_t *client)
 {
     char *response = NULL;
 
@@ -83,6 +78,7 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
     {
         // Error handling.
         asprintf(&response, "15\n3\nLEAVE-ROOM\n\nRoom not found\n");
+        return 1;
     }
     else
     {
@@ -97,15 +93,13 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
         }
 
         unlink_element(curr, prev, client->rooms);
-
-        asprintf(&response, "10\n1\nLEAVE-ROOM\n\nRoom left\n");
     }
 
-    return response;
+    return 0;
 }
 
 // Deletes room from list and removes room association from clients.
-char *delete_room(char *name, int client_fd, struct queue *rooms,
+int delete_room(char *name, int client_fd, struct queue *rooms,
                   struct connection_t *connection)
 {
     char *response = NULL;
@@ -124,14 +118,14 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
     {
         // Error handling.
         asprintf(&response, "15\n3\nDELETE-ROOM\n\nRoom not found\n");
-        return response;
+        return 1;
     }
 
     // Check if owner matches current client.
     if (client_fd != curr->owner)
     {
         asprintf(&response, "13\n3\nDELETE-ROOM\n\nUnauthorized\n");
-        return response;
+        return 2;
     }
 
     // Create copy of room name to prevent heap use after free.
@@ -161,9 +155,7 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
 
     free(room_name);
 
-    asprintf(&response, "13\n1\nDELETE-ROOM\n\nRoom deleted\n");
-
-    return response;
+    return 0;
 }
 
 // Creates list of created rooms and generates response message.
@@ -194,11 +186,9 @@ char *list_rooms(struct queue *rooms)
     return rooms_list;
 }
 
-// Joins specified room if existing.
-char *join_room(char *name, struct queue *rooms, struct connection_t *client)
+// Joins specified room if existing. Error code is 1.
+int join_room(char *name, struct queue *rooms, struct connection_t *client)
 {
-    char *response = NULL;
-
     // Check if room exists.
     struct list *curr = rooms->head;
     while (curr != NULL && strcmp(curr->name, name) != 0)
@@ -209,8 +199,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
     if (curr == NULL)
     {
         // Error handling.
-        asprintf(&response, "15\n3\nJOIN-ROOM\n\nRoom not found\n");
-        return response;
+        return 1;
     }
 
     // Check if room already joined by client.
@@ -225,7 +214,5 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
         push_element(name, client->client_socket, client->rooms);
     }
 
-    asprintf(&response, "12\n1\nJOIN-ROOM\n\nRoom joined\n");
-
-    return response;
+    return 0;
 }

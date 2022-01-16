@@ -253,14 +253,16 @@ struct connection_t *process_message(struct connection_t *client,
 
         if (strcmp(command, "PING") == 0)
         {
-            asprintf(&response, "5\n1\nPING\n\nPONG\n");
+            asprintf(&p->payload, "PONG\n");
+            response = generate_response(tokens, count, p, 1);
         }
         else if (strcmp(command, "LOGIN") == 0)
         {
             if (strcmp(tokens[count - 1], "") == 0
                 || !is_valid(tokens[count - 1]))
             {
-                asprintf(&response, "13\n3\nLOGIN\n\nBad username\n");
+                asprintf(&p->payload, "Bad username\n");
+                response = generate_response(tokens, count, p, 3);
             }
             else
             {
@@ -269,12 +271,16 @@ struct connection_t *process_message(struct connection_t *client,
 
                 if (el)
                 {
-                    asprintf(&response, "19\n3\nLOGIN\n\nDuplicate username\n");
+                    asprintf(&p->payload, "Duplicate username\n");
+                    response = generate_response(tokens, count, p, 3);
                 }
                 else
                 {
+                    // Set client username.
                     asprintf(&(client->username), "%s", tokens[count - 1]);
-                    asprintf(&response, "10\n1\nLOGIN\n\nLogged in\n");
+
+                    asprintf(&p->payload, "Logged in\n");
+                    response = generate_response(tokens, count, p, 1);
                 }
             }
         }
@@ -306,7 +312,7 @@ struct connection_t *process_message(struct connection_t *client,
 
             p->payload = users;
 
-            response = gen_message(len, 1, "LIST-USERS", p);
+            response = generate_response(tokens, count, p, 1);
         }
         else if (strcmp(command, "SEND-DM") == 0)
         {
@@ -320,18 +326,8 @@ struct connection_t *process_message(struct connection_t *client,
 
             if (i == count)
             {
-                int end = count - 2;
-                if (strcmp(tokens[count - 1], "") == 0)
-                    end++;
-
-                for (int i = 2; i < end; i++)
-                {
-                    // TODO Might need get param key end by checking for '\n'.
-                    p->params = add_param(p->params, tokens[i], NULL);
-                }
-
                 asprintf(&p->payload, "Missing parameter\n");
-                response = gen_message(18, 3, command, p);
+                response = generate_response(tokens, count, p, 3);
             }
             else
             {
@@ -349,14 +345,14 @@ struct connection_t *process_message(struct connection_t *client,
 
                 if (curr == NULL)
                 {
-                    asprintf(&response,
-                             "15\n3\nSEND-DM\n%s\n\nUser not found\n",
-                             tokens[i]);
+                    asprintf(&p->payload, "User not found\n");
+                    response = generate_response(tokens, count, p, 3);
                 }
                 else
                 {
-                    // Send notification.
-                    p->params = add_param(p->params, tokens[i], NULL);
+                    // Send notification (result not needed yet).
+                    response = generate_response(tokens, count, p, 2);
+                    free(response);
 
                     if (client->username)
                     {
@@ -380,16 +376,7 @@ struct connection_t *process_message(struct connection_t *client,
                     p = xcalloc(1, sizeof(struct params_payload));
 
                     // Send response containing all previous parameters.
-                    int end = count - 2;
-                    if (strcmp(tokens[count - 1], "") == 0)
-                        end++;
-
-                    for (int i = 2; i < end; i++)
-                    {
-                        p->params = add_param(p->params, tokens[i], NULL);
-                    }
-
-                    response = gen_message(0, 1, command, p);
+                    response = generate_response(tokens, count, p, 1);
                 }
             }
         }
@@ -402,82 +389,120 @@ struct connection_t *process_message(struct connection_t *client,
             if (strcmp(tokens[count - 1], "") == 0
                 || !is_valid(tokens[count - 1]))
             {
-                asprintf(&response, "14\n3\nCREATE-ROOM\n\nBad room name\n");
+                asprintf(&p->payload, "Bad room name\n");
+                response = generate_response(tokens, count, p, 3);
             }
             else
             {
                 struct list *el = find_element(NULL, rooms, tokens[count - 1]);
                 if (el)
                 {
-                    asprintf(&response,
-                             "20\n3\nCREATE-ROOM\n\nDuplicate room name\n");
+                    asprintf(&p->payload, "Duplicate room name\n");
+                    response = generate_response(tokens, count, p, 3);
                 }
                 else
                 {
-                    response = add_room(tokens[count - 1], rooms, client);
+                    add_room(tokens[count - 1], rooms, client);
+                    asprintf(&p->payload, "Room created\n");
+                    response = generate_response(tokens, count, p, 1);
                 }
             }
         }
         else if (strcmp(command, "LIST-ROOMS") == 0)
         {
             char *rooms_list = list_rooms(rooms);
-            size_t len = rooms_list ? strlen(rooms_list) : 0;
             p->payload = rooms_list;
-            response = gen_message(len, 1, "LIST-ROOMS", p);
+
+            response = generate_response(tokens, count, p, 1);
         }
         else if (strcmp(command, "JOIN-ROOM") == 0)
         {
-            response = join_room(tokens[count - 1], rooms, client);
+            if (join_room(tokens[count - 1], rooms, client))
+            {
+                asprintf(&p->payload, "Room not found\n");
+                response = generate_response(tokens, count, p, 3);
+            }
+            else
+            {
+                asprintf(&p->payload, "Room joined\n");
+                response = generate_response(tokens, count, p, 1);
+            }
+
         }
         else if (strcmp(command, "LEAVE-ROOM") == 0)
         {
-            response = leave_room(tokens[count - 1], rooms, client);
+            if (leave_room(tokens[count - 1], rooms, client))
+            {
+                asprintf(&p->payload, "Room not found\n");
+                response = generate_response(tokens, count, p, 3);
+            }
+            else
+            {
+                asprintf(&p->payload, "Room left\n");
+                response = generate_response(tokens, count, p, 1);
+            }
         }
         else if (strcmp(command, "SEND-ROOM") == 0)
         {}
         else if (strcmp(command, "DELETE-ROOM") == 0)
         {
-            response = delete_room(tokens[count - 1], client->client_socket,
-                                   rooms, connection);
+            int err = delete_room(tokens[count - 1], client->client_socket,
+                    rooms, connection);
+            if (err)
+            {
+                if (err == 1)
+                {
+                    asprintf(&p->payload, "Room not found\n");
+                    response = generate_response(tokens, count, p, 3);
+                }
+                else
+                {
+                    asprintf(&p->payload, "Unauthorized\n");
+                    response = generate_response(tokens, count, p, 3);
+                }
+            }
+            else
+            {
+                asprintf(&p->payload, "Room deleted\n");
+                response = generate_response(tokens, count, p, 1);
+            }
         }
         else if (strcmp(command, "PROFILE") == 0)
         {
             // Create payload.
             char *data = list_rooms(client->rooms);
-            size_t len = 0;
 
             if (data)
             {
                 if (client->username)
                 {
-                    len = asprintf(&p->payload,
-                                   "Username: %s\nIP: %s\nRooms:\n%s",
-                                   client->username, client->ip, data);
+                    asprintf(&p->payload,
+                            "Username: %s\nIP: %s\nRooms:\n%s",
+                            client->username, client->ip, data);
                 }
                 else
                 {
-                    len = asprintf(&p->payload,
-                                   "Username: <Anonymous>\nIP: %s\nRooms:\n%s",
-                                   client->ip, data);
+                    asprintf(&p->payload,
+                            "Username: <Anonymous>\nIP: %s\nRooms:\n%s",
+                            client->ip, data);
                 }
             }
             else
             {
                 if (client->username)
                 {
-                    len =
-                        asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n",
-                                 client->username, client->ip);
+                    asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n",
+                            client->username, client->ip);
                 }
                 else
                 {
-                    len = asprintf(&p->payload,
-                                   "Username: <Anonymous>\nIP: %s\nRooms:\n",
-                                   client->ip);
+                    asprintf(&p->payload,
+                            "Username: <Anonymous>\nIP: %s\nRooms:\n",
+                            client->ip);
                 }
             }
 
-            response = gen_message(len, 1, "PROFILE", p);
+            response = generate_response(tokens, count, p, 1);
         }
 
         // Send and free response.
@@ -528,20 +553,18 @@ struct connection_t *get_message(struct connection_t *connection, int connfd,
         struct list *next = NULL;
         while (curr)
         {
-            char *res = NULL;
             next = curr->next;
 
             if (curr->owner == client->client_socket)
             {
-                res = delete_room(curr->name, client->client_socket, rooms,
-                                  connection);
+                delete_room(curr->name, client->client_socket, rooms,
+                        connection);
             }
             else
             {
-                res = leave_room(curr->name, client->rooms, client);
+                leave_room(curr->name, client->rooms, client);
             }
 
-            free(res);
             curr = next;
         }
         connection = remove_client(connection, connfd);
