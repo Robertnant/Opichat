@@ -341,7 +341,7 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "LIST-ROOMS") == 0)
         {
-            char *rooms_list = list_rooms(rooms);
+            char *rooms_list = list_rooms(rooms, 0, client->client_socket);
             size_t len = rooms_list ? strlen(rooms_list) : 0;
             p->payload = rooms_list;
             response = gen_message(len, 1, "LIST-ROOMS", p);
@@ -364,7 +364,8 @@ struct connection_t *process_message(struct connection_t *client,
         else if (strcmp(command, "PROFILE") == 0)
         {
             // Create payload.
-            char *data = list_rooms(client->rooms);
+            // TODO Payload should only contain rooms that belong to user.
+            char *data = list_rooms(client->rooms, 1, client->client_socket);
             size_t len = 0;
 
             if (data)

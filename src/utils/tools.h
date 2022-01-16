@@ -30,7 +30,7 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
                   struct connection_t *connection);
 
 // Creates list of created rooms and sends to client.
-char *list_rooms(struct queue *rooms);
+char *list_rooms(struct queue *rooms, int check_owner, int client_fd);
 
 // Joins specified room if existing.
 char *join_room(char *name, struct queue *rooms, struct connection_t *client);

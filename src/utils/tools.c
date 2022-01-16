@@ -167,7 +167,7 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
 }
 
 // Creates list of created rooms and generates response message.
-char *list_rooms(struct queue *rooms)
+char *list_rooms(struct queue *rooms, int check_owner, int client_fd)
 {
     char *rooms_list = NULL;
     size_t len = 0;
@@ -175,14 +175,17 @@ char *list_rooms(struct queue *rooms)
     struct list *curr = rooms->head;
     while (curr != NULL)
     {
-        // Gets name length including newline to separate names in list.
-        size_t name_len = strlen(curr->name) + 1;
-        rooms_list = xrealloc(rooms_list, len + name_len + 1);
-        memcpy(rooms_list + len, curr->name, name_len);
-        len += name_len;
+        if (!check_owner || curr->owner == client_fd)
+        {
+            // Gets name length including newline to separate names in list.
+            size_t name_len = strlen(curr->name) + 1;
+            rooms_list = xrealloc(rooms_list, len + name_len + 1);
+            memcpy(rooms_list + len, curr->name, name_len);
+            len += name_len;
 
-        // Add newline.
-        rooms_list[len - 1] = '\n';
+            // Add newline.
+            rooms_list[len - 1] = '\n';
+        }
 
         curr = curr->next;
     }
@@ -213,6 +216,9 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
         return response;
     }
 
+    // Get room owner.
+    int owner = curr->owner;
+
     // Check if room already joined by client.
     curr = client->rooms->head;
     while (curr != NULL && strcmp(curr->name, name) != 0)
@@ -222,7 +228,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
 
     if (curr == NULL)
     {
-        push_element(name, client->client_socket, client->rooms);
+        push_element(name, owner, client->rooms);
     }
 
     asprintf(&response, "12\n1\nJOIN-ROOM\n\nRoom joined\n");
