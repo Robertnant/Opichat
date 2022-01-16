@@ -101,11 +101,19 @@ int is_valid(char *element)
 
     return 1;
 }
-// Adds parameter to parameters list (order does not matter).
+
+/*
+** Adds parameter to parameters list (order does not matter).
+** If value is NULL, then key contains both key and value pair.
+*/
 struct list *add_param(struct list *params, char *key, char *value)
 {
     struct list *new = xcalloc(1, sizeof(struct list));
-    asprintf(&(new->name), "%s=%s", key, value);
+
+    if (value)
+        asprintf(&(new->name), "%s=%s", key, value);
+    else
+        asprintf(&(new->name), "%s", key);
 
     new->next = params;
 
@@ -121,7 +129,7 @@ char *gen_message(size_t size, int status, char *command,
     while (p->params != NULL)
     {
         res =
-            xrealloc(res, (count + strlen(p->params->name) + 1) * sizeof(char));
+            xrealloc(res, (count + strlen(p->params->name) + 2) * sizeof(char));
         count += sprintf(res + count, "%s\n", p->params->name);
         p->params = p->params->next;
     }

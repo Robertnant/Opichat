@@ -27,7 +27,10 @@ struct params_payload
 */
 char **lexer(char **message, int *tokens_count);
 
-// Adds parameter to parameters list (order does not matter).
+/*
+** Adds parameter to parameters list (order does not matter).
+** If value is NULL, then key contains both key and value pair.
+*/
 struct list *add_param(struct list *params, char *key, char *value);
 
 // Checks if parameter or payload is valid. Returns 1 if valid else 0.

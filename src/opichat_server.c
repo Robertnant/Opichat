@@ -14,8 +14,6 @@
 #include "utils/lexer.h"
 #include "utils/xalloc.h"
 
-// TODO: Initialize client with rooms queue. 2. Delete struct when disconnect.
-
 /**
  * \brief Iterate over the struct addrinfo elements to create and bind a socket
  *
@@ -312,7 +310,47 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "SEND-DM") == 0)
         {
-            // handle response and notification
+            // Get username parameter.
+            // TODO Maybe set value for i.
+            int i;
+            for (i = 2; i < count; i++)
+            {
+                if (strstr(tokens[i], "User=") != NULL)
+                    break;
+            }
+
+            // Check if user exists.
+            struct connection_t *curr = connection;
+            while (curr)
+            {
+                int offset = strlen("User=");
+                if (strcmp(tokens[i] + offset, curr->username) == 0)
+                    break;
+
+                curr = curr->next;
+            }
+
+            if (curr == NULL)
+            {
+                asprintf(&response, "15\n3\nSEND-DM\n\nUser not found\n");
+            }
+            else
+            {
+                // Send response then notification.
+
+                p->params = add_param(p->params, tokens[i], NULL);
+                p->params = add_param(p->params, "From", client->username);
+                asprintf(&p->payload, "%s", tokens[count - 1]);
+                size_t len = atol(tokens[0]);
+
+                response = gen_message(len, 2, command, p);
+                send_message(response, strlen(response), curr->client_socket,
+                             connection);
+
+                free(response);
+
+                asprintf(&response, "0\n1\nSEND-DM\n%s\n\n", tokens[i]);
+            }
         }
         else if (strcmp(command, "BROADCAST") == 0)
         {
