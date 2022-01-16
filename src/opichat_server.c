@@ -382,7 +382,42 @@ struct connection_t *process_message(struct connection_t *client,
         }
         else if (strcmp(command, "BROADCAST") == 0)
         {
-            // handle response and notification
+            // Send notification (result not needed yet).
+            response = generate_response(tokens, count, p, 2);
+            free(response);
+
+            if (client->username)
+            {
+                p->params = add_param(p->params, "From", client->username);
+            }
+            else
+            {
+                p->params = add_param(p->params, "From", "<Anonymous>");
+            }
+
+            asprintf(&p->payload, "%s", tokens[count - 1]);
+            size_t len = atol(tokens[0]);
+
+            response = gen_message(len, 2, command, p);
+
+            struct connection_t *curr = connection;
+            while (curr)
+            {
+                if (curr->client_socket != client->client_socket)
+                {
+                    send_message(response, strlen(response),
+                                 curr->client_socket, connection);
+                }
+
+                curr = curr->next;
+            }
+
+            free(response);
+            free_payload(p);
+            p = xcalloc(1, sizeof(struct params_payload));
+
+            // Send response containing all previous parameters.
+            response = generate_response(tokens, count, p, 1);
         }
         else if (strcmp(command, "CREATE-ROOM") == 0)
         {
