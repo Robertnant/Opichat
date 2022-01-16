@@ -477,7 +477,91 @@ struct connection_t *process_message(struct connection_t *client,
             }
         }
         else if (strcmp(command, "SEND-ROOM") == 0)
-        {}
+        {
+            // Get room name parameter.
+            int i;
+            for (i = 2; i < count; i++)
+            {
+                if (strstr(tokens[i], "Room=") != NULL)
+                    break;
+            }
+
+            if (i == count)
+            {
+                asprintf(&p->payload, "Missing parameter\n");
+                response = generate_response(tokens, count, p, 3);
+            }
+            else
+            {
+                // Check if room exists.
+                int offset = strlen("Room=");
+                struct list *curr = rooms->head;
+                while (curr)
+                {
+                    if (curr->name
+                        && strcmp(tokens[i] + offset, curr->name) == 0)
+                        break;
+
+                    curr = curr->next;
+                }
+
+                if (curr == NULL)
+                {
+                    asprintf(&p->payload, "Room not found\n");
+                    response = generate_response(tokens, count, p, 3);
+                }
+                else
+                {
+                    // Send notification (result not needed yet).
+                    response = generate_response(tokens, count, p, 2);
+                    free(response);
+
+                    if (client->username)
+                    {
+                        p->params =
+                            add_param(p->params, "From", client->username);
+                    }
+                    else
+                    {
+                        p->params = add_param(p->params, "From", "<Anonymous>");
+                    }
+
+                    asprintf(&p->payload, "%s", tokens[count - 1]);
+                    size_t len = atol(tokens[0]);
+
+                    response = gen_message(len, 2, command, p);
+
+                    // Send notification to room.
+                    struct connection_t *curr_connect = connection;
+                    while (curr_connect)
+                    {
+                        // Check if current client is in room.
+                        struct list *room = curr_connect->rooms->head;
+                        while (room != NULL
+                               && strcmp(room->name, tokens[i] + offset) != 0)
+                        {
+                            room = room->next;
+                        }
+
+                        if (room)
+                        {
+                            send_message(response, strlen(response),
+                                         curr_connect->client_socket,
+                                         connection);
+                        }
+
+                        curr_connect = curr_connect->next;
+                    }
+
+                    free(response);
+                    free_payload(p);
+                    p = xcalloc(1, sizeof(struct params_payload));
+
+                    // Send response containing all previous parameters.
+                    response = generate_response(tokens, count, p, 1);
+                }
+            }
+        }
         else if (strcmp(command, "DELETE-ROOM") == 0)
         {
             int err = delete_room(tokens[count - 1], client->client_socket,
