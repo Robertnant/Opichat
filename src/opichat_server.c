@@ -543,7 +543,7 @@ struct connection_t *process_message(struct connection_t *client,
                             room = room->next;
                         }
 
-                        if (room)
+                        if (room && room->owner != client->client_socket)
                         {
                             send_message(response, strlen(response),
                                          curr_connect->client_socket,
