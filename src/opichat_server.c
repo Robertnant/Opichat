@@ -319,37 +319,54 @@ struct connection_t *process_message(struct connection_t *client,
                     break;
             }
 
-            // Check if user exists.
-            struct connection_t *curr = connection;
-            while (curr)
+            if (i == count)
             {
-                int offset = strlen("User=");
-                if (strcmp(tokens[i] + offset, curr->username) == 0)
-                    break;
-
-                curr = curr->next;
-            }
-
-            if (curr == NULL)
-            {
-                asprintf(&response, "15\n3\nSEND-DM\n\nUser not found\n");
+                asprintf(&response, "12\n3\nSEND-DM\n\nBad request\n");
             }
             else
             {
-                // Send response then notification.
+                // Check if user exists.
+                struct connection_t *curr = connection;
+                while (curr)
+                {
+                    int offset = strlen("User=");
+                    if (curr->username
+                        && strcmp(tokens[i] + offset, curr->username) == 0)
+                        break;
 
-                p->params = add_param(p->params, tokens[i], NULL);
-                p->params = add_param(p->params, "From", client->username);
-                asprintf(&p->payload, "%s", tokens[count - 1]);
-                size_t len = atol(tokens[0]);
+                    curr = curr->next;
+                }
 
-                response = gen_message(len, 2, command, p);
-                send_message(response, strlen(response), curr->client_socket,
-                             connection);
+                if (curr == NULL)
+                {
+                    asprintf(&response, "15\n3\nSEND-DM\n\nUser not found\n");
+                }
+                else
+                {
+                    // Send response and notification.
+                    p->params = add_param(p->params, tokens[i], NULL);
 
-                free(response);
+                    if (client->username)
+                    {
+                        p->params =
+                            add_param(p->params, "From", client->username);
+                    }
+                    else
+                    {
+                        p->params = add_param(p->params, "From", "<Anonymous>");
+                    }
 
-                asprintf(&response, "0\n1\nSEND-DM\n%s\n\n", tokens[i]);
+                    asprintf(&p->payload, "%s", tokens[count - 1]);
+                    size_t len = atol(tokens[0]);
+
+                    response = gen_message(len, 2, command, p);
+                    send_message(response, strlen(response),
+                                 curr->client_socket, connection);
+
+                    free(response);
+
+                    asprintf(&response, "0\n1\nSEND-DM\n%s\n\n", tokens[i]);
+                }
             }
         }
         else if (strcmp(command, "BROADCAST") == 0)
