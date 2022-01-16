@@ -389,162 +389,161 @@ struct connection_t *process_message(struct connection_t *client,
                     len =
                         asprintf(&p->payload, "Username: %s\nIP: %s\nRooms:\n",
                                  client->username, client->ip);
-                    else
-                    {
-                        len =
-                            asprintf(&p->payload,
-                                     "Username: <Anonymous>\nIP: %s\nRooms:\n",
-                                     client->ip);
-                    }
-                }
-
-                response = gen_message(len, 1, "PROFILE", p);
-            }
-
-            // Send and free response.
-            if (response)
-            {
-                send_message(response, strlen(response), client->client_socket,
-                             connection);
-                free(response);
-            }
-
-            free_payload(p);
-            p = NULL;
-
-            // TODO Free tokens array.
-        }
-
-        // Reset client buffer if parsing successful (tokens created at least
-        // once).
-        if (count != 0)
-        {
-            client->nb_read = 0;
-            free(client->buffer);
-            client->buffer = NULL;
-        }
-
-        return connection;
-    }
-
-    // Reads incoming message from client and processes it.
-    struct connection_t *get_message(struct connection_t * connection,
-                                     int connfd, struct queue *rooms)
-    {
-        char received[DEFAULT_BUFFER_SIZE];
-        struct connection_t *client = find_client(connection, connfd);
-
-        ssize_t n = recv(connfd, received, DEFAULT_BUFFER_SIZE, 0);
-
-        if (n <= 0)
-        {
-            // Handle client disconnection or error.
-            if (n == -1)
-                perror("failed to read data from client");
-            else
-                puts("Client disconnected");
-
-            // Delete rooms associated to client and remove client.
-            struct list *curr = client->rooms->head;
-            struct list *next = NULL;
-            while (curr)
-            {
-                char *res = NULL;
-                next = curr->next;
-
-                if (curr->owner == client->client_socket)
-                {
-                    res = delete_room(curr->name, client->client_socket, rooms,
-                                      connection);
                 }
                 else
                 {
-                    res = leave_room(curr->name, client->rooms, client);
+                    len = asprintf(&p->payload,
+                                   "Username: <Anonymous>\nIP: %s\nRooms:\n",
+                                   client->ip);
                 }
-
-                free(res);
-                curr = next;
             }
-            connection = remove_client(connection, connfd);
+
+            response = gen_message(len, 1, "PROFILE", p);
         }
+
+        // Send and free response.
+        if (response)
+        {
+            send_message(response, strlen(response), client->client_socket,
+                         connection);
+            free(response);
+        }
+
+        free_payload(p);
+        p = NULL;
+
+        // TODO Free tokens array.
+    }
+
+    // Reset client buffer if parsing successful (tokens created at least
+    // once).
+    if (count != 0)
+    {
+        client->nb_read = 0;
+        free(client->buffer);
+        client->buffer = NULL;
+    }
+
+    return connection;
+}
+
+// Reads incoming message from client and processes it.
+struct connection_t *get_message(struct connection_t *connection, int connfd,
+                                 struct queue *rooms)
+{
+    char received[DEFAULT_BUFFER_SIZE];
+    struct connection_t *client = find_client(connection, connfd);
+
+    ssize_t n = recv(connfd, received, DEFAULT_BUFFER_SIZE, 0);
+
+    if (n <= 0)
+    {
+        // Handle client disconnection or error.
+        if (n == -1)
+            perror("failed to read data from client");
         else
+            puts("Client disconnected");
+
+        // Delete rooms associated to client and remove client.
+        struct list *curr = client->rooms->head;
+        struct list *next = NULL;
+        while (curr)
         {
-            // Realloc buffer and NULL terminate for parsing.
-            client->buffer = xrealloc(client->buffer, client->nb_read + n + 1);
-            memcpy(client->buffer + client->nb_read, received, n);
-            client->nb_read += n;
-            client->buffer[client->nb_read] = '\0';
+            char *res = NULL;
+            next = curr->next;
 
-            connection = process_message(client, connection, rooms);
+            if (curr->owner == client->client_socket)
+            {
+                res = delete_room(curr->name, client->client_socket, rooms,
+                                  connection);
+            }
+            else
+            {
+                res = leave_room(curr->name, client->rooms, client);
+            }
+
+            free(res);
+            curr = next;
         }
+        connection = remove_client(connection, connfd);
+    }
+    else
+    {
+        // Realloc buffer and NULL terminate for parsing.
+        client->buffer = xrealloc(client->buffer, client->nb_read + n + 1);
+        memcpy(client->buffer + client->nb_read, received, n);
+        client->nb_read += n;
+        client->buffer[client->nb_read] = '\0';
 
-        return connection;
+        connection = process_message(client, connection, rooms);
     }
 
-    int main(int argc, char **argv)
+    return connection;
+}
+
+int main(int argc, char **argv)
+{
+    if (argc != 3)
+        errx(1, "usage: %s <ip> <port>", argv[0]);
+
+    // Get a listener socket for server.
+    int listen_sock = prepare_socket(argv[1], argv[2]);
+
+    // Create an epoll instance (file descriptor) and add listening socket
+    // to set.
+    struct epoll_event event;
+
+    int epoll_instance = epoll_create1(0);
+
+    if (epoll_instance == -1)
+        err(1, "failed to create epoll instance");
+
+    // Associate listening socket for read operations.
+    event.events = EPOLLIN;
+    event.data.fd = listen_sock;
+
+    // Add listener socket fd to new epoll instance.
+    // Event structure passed indicates that only input events will be
+    // handled.
+    if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, listen_sock, &event) == -1)
+        err(1, "failed to add listener socket to epoll instance");
+
+    // Initialize rooms structure.
+    struct queue *rooms = init_queue();
+
+    // Wait indefinitely for an event to occur.
+    struct connection_t *connection = NULL;
+
+    while (1)
     {
-        if (argc != 3)
-            errx(1, "usage: %s <ip> <port>", argv[0]);
+        // Create list for events that will occur from epoll instance
+        // (ready list).
+        struct epoll_event events[MAX_EVENTS];
 
-        // Get a listener socket for server.
-        int listen_sock = prepare_socket(argv[1], argv[2]);
+        // Wait for events on given file descriptors.
+        // events_count represents number of file descriptors on which
+        // an event occured (ready file descriptors).
+        int events_count = epoll_wait(epoll_instance, events, MAX_EVENTS, -1);
 
-        // Create an epoll instance (file descriptor) and add listening socket
-        // to set.
-        struct epoll_event event;
+        if (events_count == -1)
+            err(1, "failed to wait for events to occur");
 
-        int epoll_instance = epoll_create1(0);
-
-        if (epoll_instance == -1)
-            err(1, "failed to create epoll instance");
-
-        // Associate listening socket for read operations.
-        event.events = EPOLLIN;
-        event.data.fd = listen_sock;
-
-        // Add listener socket fd to new epoll instance.
-        // Event structure passed indicates that only input events will be
-        // handled.
-        if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, listen_sock, &event) == -1)
-            err(1, "failed to add listener socket to epoll instance");
-
-        // Initialize rooms structure.
-        struct queue *rooms = init_queue();
-
-        // Wait indefinitely for an event to occur.
-        struct connection_t *connection = NULL;
-
-        while (1)
+        // Handle ready file descriptors.
+        for (int event_idx = 0; event_idx < events_count; event_idx++)
         {
-            // Create list for events that will occur from epoll instance
-            // (ready list).
-            struct epoll_event events[MAX_EVENTS];
-
-            // Wait for events on given file descriptors.
-            // events_count represents number of file descriptors on which
-            // an event occured (ready file descriptors).
-            int events_count =
-                epoll_wait(epoll_instance, events, MAX_EVENTS, -1);
-
-            if (events_count == -1)
-                err(1, "failed to wait for events to occur");
-
-            // Handle ready file descriptors.
-            for (int event_idx = 0; event_idx < events_count; event_idx++)
+            // Listener socket.
+            if (events[event_idx].data.fd == listen_sock)
             {
-                // Listener socket.
-                if (events[event_idx].data.fd == listen_sock)
-                {
-                    // Accept a new client and add it to the connection_t
-                    // struct.
-                    connection =
-                        accept_client(epoll_instance, listen_sock, connection);
-                }
-                else
-                {
-                    connection = get_message(connection,
-                                             events[event_idx].data.fd, rooms);
-                }
+                // Accept a new client and add it to the connection_t
+                // struct.
+                connection =
+                    accept_client(epoll_instance, listen_sock, connection);
+            }
+            else
+            {
+                connection =
+                    get_message(connection, events[event_idx].data.fd, rooms);
             }
         }
     }
+}
