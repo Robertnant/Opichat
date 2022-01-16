@@ -311,7 +311,6 @@ struct connection_t *process_message(struct connection_t *client,
         else if (strcmp(command, "SEND-DM") == 0)
         {
             // Get username parameter.
-            // TODO Maybe set value for i.
             int i;
             for (i = 2; i < count; i++)
             {
@@ -321,7 +320,18 @@ struct connection_t *process_message(struct connection_t *client,
 
             if (i == count)
             {
-                asprintf(&response, "12\n3\nSEND-DM\n\nBad request\n");
+                int end = count - 2;
+                if (strcmp(tokens[count - 1], "") == 0)
+                    end++;
+
+                for (int i = 2; i < end; i++)
+                {
+                    // TODO Might need get param key end by checking for '\n'.
+                    p->params = add_param(p->params, tokens[i], NULL);
+                }
+
+                asprintf(&p->payload, "Missing parameter\n");
+                response = gen_message(18, 3, command, p);
             }
             else
             {
@@ -339,12 +349,13 @@ struct connection_t *process_message(struct connection_t *client,
 
                 if (curr == NULL)
                 {
-                    asprintf(&response, "15\n3\nSEND-DM\n%s\nUser not found\n",
+                    asprintf(&response,
+                             "15\n3\nSEND-DM\n%s\n\nUser not found\n",
                              tokens[i]);
                 }
                 else
                 {
-                    // Send response and notification.
+                    // Send notification.
                     p->params = add_param(p->params, tokens[i], NULL);
 
                     if (client->username)
@@ -365,8 +376,20 @@ struct connection_t *process_message(struct connection_t *client,
                                  curr->client_socket, connection);
 
                     free(response);
+                    free_payload(p);
+                    p = xcalloc(1, sizeof(struct params_payload));
 
-                    asprintf(&response, "0\n1\nSEND-DM\n%s\n\n", tokens[i]);
+                    // Send response containing all previous parameters.
+                    int end = count - 2;
+                    if (strcmp(tokens[count - 1], "") == 0)
+                        end++;
+
+                    for (int i = 2; i < end; i++)
+                    {
+                        p->params = add_param(p->params, tokens[i], NULL);
+                    }
+
+                    response = gen_message(0, 1, command, p);
                 }
             }
         }
