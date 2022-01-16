@@ -339,7 +339,8 @@ struct connection_t *process_message(struct connection_t *client,
 
                 if (curr == NULL)
                 {
-                    asprintf(&response, "15\n3\nSEND-DM\n\nUser not found\n");
+                    asprintf(&response, "15\n3\nSEND-DM\n%s\nUser not found\n",
+                             tokens[i]);
                 }
                 else
                 {
