@@ -14,6 +14,8 @@
 #include "utils/lexer.h"
 #include "utils/xalloc.h"
 
+// TODO: Initialize client with rooms queue. 2. Delete struct when disconnect.
+
 /**
  * \brief Iterate over the struct addrinfo elements to create and bind a socket
  *
@@ -96,6 +98,17 @@ int prepare_socket(const char *ip, const char *port)
     return sfd;
 }
 
+// Returns a new initialized queue list.
+struct queue *init_queue(void)
+{
+    struct queue *list = xmalloc(sizeof(struct queue));
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+
+    return list;
+}
+
 /**
  * \brief Accept a new client and add it to the connection_t struct
  *
@@ -133,6 +146,7 @@ struct connection_t *accept_client(int epoll_instance, int server_socket,
         else
         {
             connection = add_client(connection, connfd);
+            connection->rooms = init_queue();
             puts("Client connected");
         }
     }
@@ -384,8 +398,27 @@ struct connection_t *get_message(struct connection_t *connection, int connfd,
         else
             puts("Client disconnected");
 
-        // Delete room associated to client and remove client.
-        delete_room(client->room, connfd, rooms, connection);
+        // Delete rooms associated to client and remove client.
+        struct list *curr = client->rooms->head;
+        struct list *next = NULL;
+        while (curr)
+        {
+            char *res = NULL;
+            next = curr->next;
+
+            if (curr->owner == client->client_socket)
+            {
+                res = delete_room(curr->name, client->client_socket, rooms,
+                                  connection);
+            }
+            else
+            {
+                res = leave_room(curr->name, client->rooms, client);
+            }
+
+            free(res);
+            curr = next;
+        }
         connection = remove_client(connection, connfd);
     }
     else
@@ -400,17 +433,6 @@ struct connection_t *get_message(struct connection_t *connection, int connfd,
     }
 
     return connection;
-}
-
-// Returns a new initialized queue list.
-struct queue *init_queue(void)
-{
-    struct queue *list = xmalloc(sizeof(struct queue));
-    list->head = NULL;
-    list->tail = NULL;
-    list->size = 0;
-
-    return list;
 }
 
 int main(int argc, char **argv)

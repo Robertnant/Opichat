@@ -9,34 +9,56 @@
 #include "lexer.h"
 #include "xalloc.h"
 
-// Adds room to list and associates it with client connection.
-char *add_room(char *name, struct queue *rooms, struct connection_t *client)
+// Pushes a new element to a queue.
+void push_element(char *name, int value, struct queue *queue)
 {
     // Create new element.
     struct list *element = xmalloc(sizeof(struct list));
-    element->owner = client->client_socket;
+    element->owner = value;
     asprintf(&element->name, "%s", name);
     element->next = NULL;
 
     // Handle case for empty rooms list.
-    if (!(rooms->tail))
+    if (!(queue->tail))
     {
-        rooms->head = element;
-        rooms->tail = element;
+        queue->head = element;
+        queue->tail = element;
     }
     else
     {
-        rooms->tail->next = element;
-        rooms->tail = element;
+        queue->tail->next = element;
+        queue->tail = element;
     }
 
-    rooms->size += 1;
+    queue->size += 1;
+}
+
+// Unlinks element from list.
+void unlink_element(struct list *curr, struct list *prev, struct queue *queue)
+{
+    if (curr == queue->head)
+        queue->head = curr->next;
+
+    if (curr == queue->tail)
+        queue->tail = prev;
+
+    if (prev)
+        prev->next = curr->next;
+
+    queue->size -= 1;
+
+    free(curr->name);
+    curr->name = NULL;
+    free(curr);
+}
+
+// Adds room to list and associates it with client connection.
+char *add_room(char *name, struct queue *rooms, struct connection_t *client)
+{
+    push_element(name, client->client_socket, rooms);
 
     // Associate room to current client.
-    if (client->room)
-        free(client->room);
-
-    asprintf(&client->room, "%s", name);
+    push_element(name, client->client_socket, client->rooms);
 
     char *response = NULL;
     asprintf(&response, "13\n1\nCREATE-ROOM\n\nRoom created\n");
@@ -64,8 +86,18 @@ char *leave_room(char *name, struct queue *rooms, struct connection_t *client)
     }
     else
     {
-        free(client->room);
-        client->room = NULL;
+        // Find first occurence of room.
+        curr = client->rooms->head;
+        struct list *prev = NULL;
+
+        while (strcmp(curr->name, name) != 0)
+        {
+            prev = curr;
+            curr = curr->next;
+        }
+
+        unlink_element(curr, prev, client->rooms);
+
         asprintf(&response, "10\n1\nLEAVE-ROOM\n\nRoom left\n");
     }
 
@@ -106,29 +138,27 @@ char *delete_room(char *name, int client_fd, struct queue *rooms,
     char *room_name = NULL;
     asprintf(&room_name, "%s", name);
 
-    if (curr == rooms->head)
-        rooms->head = curr->next;
-
-    if (curr == rooms->tail)
-        rooms->tail = prev;
-
-    if (prev)
-        prev->next = curr->next;
-
-    rooms->size -= 1;
-
-    free(curr->name);
-    curr->name = NULL;
-    free(curr);
+    unlink_element(curr, prev, rooms);
 
     // Remove room from all client connections.
     while (connection != NULL)
     {
-        if (connection->room && strcmp(connection->room, room_name) == 0)
+        curr = connection->rooms->head;
+        prev = NULL;
+
+        // Find first occurence of room.
+        while (curr && strcmp(curr->name, room_name) != 0)
         {
-            free(connection->room);
-            connection->room = NULL;
+            prev = curr;
+            curr = curr->next;
         }
+
+        if (curr)
+        {
+            unlink_element(curr, prev, connection->rooms);
+            break;
+        }
+
         connection = connection->next;
     }
 
@@ -192,10 +222,7 @@ char *join_room(char *name, struct queue *rooms, struct connection_t *client)
         return response;
     }
 
-    if (client->room)
-        free(client->room);
-
-    asprintf(&(client->room), "%s", name);
+    push_element(name, client->client_socket, client->rooms);
 
     asprintf(&response, "12\n1\nJOIN-ROOM\n\nRoom joined\n");
 
