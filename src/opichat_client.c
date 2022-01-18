@@ -143,7 +143,7 @@ void *parse_message(void *arg)
     }
     return NULL;
 }
-
+/*
 void communicate(int server_socket)
 {
     ssize_t res;
@@ -155,27 +155,72 @@ void communicate(int server_socket)
     }
     if (lineptr != NULL)
         free(lineptr);
+}*/
+
+// Check if str is in tab
+int is_in(char *str, char **tab, int size)
+{
+    size_t i = 0;
+    while (i < size && strcmp(str, tab[i]) != 0)
+        i++;
+    if (i == size)
+        return 1;
+    return 0;
 }
 
-/*
 void communicate(int server_socket)
 {
     ssize_t res;
     char *lineptr = NULL;
     size_t n = 0;
-    char **commands = [
+    struct params_payload *params = xcalloc(1, sizeof(struct params_payload));
+    char *send = NULL;
+    char *commands[10] = [
         "PING", "LOGIN", "LIST-USERS", "BROADCAST", "CREATE-ROOM", "LIST-ROOMS",
         "JOIN-ROOM", "LEAVE-ROOM", "DELETE-ROOM", "PROFILE"
     ];
-    char **args_commands = ["SEND-DM", "SEND-ROOM"];
-    while (puts("Command:") && (res = getline(&lineptr, &n, stdin)) != -1)
+    char *args_commands[2] = ["SEND-DM", "SEND-ROOM"];
+    while (puts("command:") && (res = getline(&lineptr, &n, stdin)) != -1)
     {
+        char *command = lineptr;
+        if (is_in(lineptr, args_commands, 2) == 0)
+        {
+            puts("Parameters:");
+            while (res = getline(&lineptr, &n, stdin) != -1)
+            {
+                params->params = add_param(params->params, lineptr, NULL);
+                free(lineptr);
+                n = 0;
+                lineptr = NULL;
+            }
+            while (puts("Payload:") && (res = getline(&lineptr, &n, stdin)) != -1)
+            {
+                if (strcmp(lineptr, "/quit\n") == 0)
+                {
+                    break;
+                }
+                params->payload = lineptr;
+                send = gen_message(res, 0, command, params);
+                free(lineptr);
+                n = 0;
+                lineptr = NULL;
+            }
+        }
+        else if (is_in(lineptr, commands, 10) == 0)
+        {
+            
+        }
+        else
+        {
+            write(2, "Invalid command\n", 16);
+            break;
+        }
         resend(lineptr, res, server_socket);
     }
     if (lineptr != NULL)
         free(lineptr);
 }
-*/
+
 
 /*
 int main(void)
