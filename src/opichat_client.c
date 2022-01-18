@@ -176,8 +176,8 @@ void communicate(int server_socket)
     struct params_payload *params = xcalloc(1, sizeof(struct params_payload));
     char *send = NULL;
     char *commands[10] = [
-        "PING", "LOGIN", "LIST-USERS", "BROADCAST", "CREATE-ROOM", "LIST-ROOMS",
-        "JOIN-ROOM", "LEAVE-ROOM", "DELETE-ROOM", "PROFILE"
+        "PING","LIST-USERS", "LIST-ROOMS", "PROFILE","LOGIN", "BROADCAST", "CREATE-ROOM",
+        "JOIN-ROOM", "LEAVE-ROOM", "DELETE-ROOM"
     ];
     char *args_commands[2] = ["SEND-DM", "SEND-ROOM"];
     while (puts("command:") && (res = getline(&lineptr, &n, stdin)) != -1)
@@ -188,10 +188,18 @@ void communicate(int server_socket)
             puts("Parameters:");
             while (res = getline(&lineptr, &n, stdin) != -1)
             {
-                params->params = add_param(params->params, lineptr, NULL);
-                free(lineptr);
-                n = 0;
-                lineptr = NULL;
+                char *r = strstr('=', lineptr);
+                if (r == NULL || r == lineptr || strlen(r) == 1)
+                {
+                    write(2, 18 ,"Invalid parameter\n");
+                }
+                else
+                {
+                    params->params = add_param(params->params, lineptr, NULL);
+                    free(lineptr);
+                    n = 0;
+                    lineptr = NULL;
+                }
             }
             while (puts("Payload:") && (res = getline(&lineptr, &n, stdin)) != -1)
             {
@@ -208,7 +216,16 @@ void communicate(int server_socket)
         }
         else if (is_in(lineptr, commands, 10) == 0)
         {
-            
+            if (is_in(lineptr, commands, 4) == 0 )
+            {
+                send = gen_message(0, 0, command, params);
+            }
+            else
+            {
+                res = getline(&lineptr, &n, stdin);
+                params->payload = lineptr;
+                send = gen_message(res, 0, command, params);
+            }
         }
         else
         {
@@ -220,7 +237,6 @@ void communicate(int server_socket)
     if (lineptr != NULL)
         free(lineptr);
 }
-
 
 /*
 int main(void)
