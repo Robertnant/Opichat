@@ -177,7 +177,7 @@ int is_valid_param(char *param)
         return 1;
 
     char *r = strstr(param, "=");
-    int cond1 = r && r != param && strlen(r) != 2;
+    int cond1 = r && r != param && (strlen(r) > 1);
 
     if (!cond1)
         return 0;
@@ -194,6 +194,8 @@ int is_valid_param(char *param)
     return cond2;
 }
 
+// TODO Find out what case for parameters is valid but returning false
+// in code.
 void communicate(int server_socket)
 {
     ssize_t res;
