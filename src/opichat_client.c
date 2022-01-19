@@ -244,7 +244,7 @@ void get_params(struct params_payload *p)
             // lineptr[n] = '\0';
             if (is_valid_param(lineptr) == 0)
             {
-                write(2, "Invalid parameter\n", 18);
+                fprintf(stderr, "Invalid parameter\n");
                 // fflush(sttderr)
             }
             else
