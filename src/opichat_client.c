@@ -219,7 +219,7 @@ void communicate(int server_socket)
         {
             int timeout = 2;
 
-            puts("Parameters:");
+            write(1, "Parameters:\n", 12);
             while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
             {
                 if (res == 1)
@@ -241,7 +241,7 @@ void communicate(int server_socket)
                     }
                 }
             }
-            while (puts("Payload:")
+            while (write(1, "Payload:\n", 9)
                    && (res = getline(&lineptr, &n, stdin)) != -1)
             {
                 lineptr[res - 1] = '\0';
