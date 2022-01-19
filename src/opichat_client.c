@@ -262,27 +262,38 @@ void communicate(int server_socket)
             write(1, "Parameters:\n", 12);
             get_params(params);
 
+            char *payload = NULL;
+            size_t size = 0;
             while (write(1, "Payload:\n", 9)
-                   && (res = getline(&lineptr, &n, stdin)) != -1)
+                   && (res = getline(&payload, &size, stdin)) != -1)
             {
-                lineptr[res - 1] = '\0';
-                if (strcmp(lineptr, "/quit") == 0)
+                size_t count = 0;
+                while (count < size && payload[count] != '\n')
                 {
-                    free(lineptr);
-                    lineptr = NULL;
+                    count++;
+                }
+
+                if (count < size)
+                {
+                    payload[res - 1] = '\0';
+                }
+
+                if (strcmp(payload, "/quit") == 0)
+                {
+                    free(payload);
+                    payload = NULL;
                     n = 0;
                     break;
                 }
-                asprintf(&params->payload, "%s", lineptr);
-                send = gen_message(strlen(lineptr), 0, command, params);
+                asprintf(&params->payload, "%s", payload);
+                send = gen_message(strlen(payload), 0, command, params);
                 resend(send, strlen(send), server_socket);
                 free(send);
                 send = NULL;
-
-                free(lineptr);
-                lineptr = NULL;
-                n = 0;
             }
+            free(payload);
+            payload = NULL;
+            n = 0;
         }
         else if (is_in(command, commands, 10) == 0)
         {
@@ -290,10 +301,13 @@ void communicate(int server_socket)
             write(1, "Payload:\n", 9);
             res = getline(&lineptr, &n, stdin);
 
-            lineptr[res - 1] = '\0';
-            asprintf(&params->payload, "%s", lineptr);
+            if (res != -1)
+            {
+                lineptr[res - 1] = '\0';
+                asprintf(&params->payload, "%s", lineptr);
+                send = gen_message(strlen(lineptr), 0, command, params);
+            }
 
-            send = gen_message(strlen(lineptr), 0, command, params);
             free(lineptr);
             lineptr = NULL;
             n = 0;
