@@ -99,7 +99,7 @@ void *parse_message(void *arg)
                 switch (atoi(tokens[1]))
                 {
                 case 1:
-                    if (tokens[0] != 0)
+                    if (strcmp(tokens[0], "0") != 0)
                     {
                         write(1, "< ", strlen("< "));
                         write(1, payload, atoi(tokens[0]));
