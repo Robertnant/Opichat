@@ -182,14 +182,20 @@ int is_valid_param(char *param)
     if (!cond1)
         return 0;
 
-    *r = '\0';
-    int curr_len = strlen(r + 1);
+    int curr_len = strlen(r);
 
-    int cond2 = strlen(param) && curr_len;
+    // printf("This param%sEND", param);
+
+    *r = '\0';
+
+    if (strlen(param) > 0 && (curr_len > 1))
+    {
+        *r = '=';
+        return 1;
+    }
 
     *r = '=';
-
-    return cond2;
+    return 0;
 }
 
 // TODO Find out what case for parameters is valid but returning false
@@ -230,7 +236,7 @@ void communicate(int server_socket)
                 if (res == 1)
                     timeout--;
 
-                if (!is_valid_param(lineptr))
+                if (is_valid_param(lineptr) == 0)
                 {
                     write(2, "Invalid parameter\n", 18);
                 }
