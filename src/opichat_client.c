@@ -267,7 +267,7 @@ void get_payload(struct params_payload *params, char *command,
     ssize_t res = 0;
 
     while (write(1, "Payload:\n", 9)
-           && (res = getline(&payload, &size, stdin)) != -1)
+           && (res = getline(&payload, &size, stdin)) > 0)
     {
         ssize_t count = 0;
         while (count < res && payload[count] != '\n')
@@ -315,7 +315,7 @@ void communicate(int server_socket)
                            "DELETE-ROOM" };
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
     while (write(1, "Command:\n", 9)
-           && (res = getline(&lineptr, &n, stdin)) != -1)
+           && (res = getline(&lineptr, &n, stdin)) > 0)
     {
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
@@ -343,7 +343,7 @@ void communicate(int server_socket)
             write(1, "Payload:\n", 9);
             res = getline(&lineptr, &n, stdin);
 
-            if (res != -1)
+            if (res > 0)
             {
                 ssize_t count = 0;
                 while (count < res && lineptr[count] != '\n')
