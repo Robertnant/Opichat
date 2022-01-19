@@ -343,8 +343,16 @@ void communicate(int server_socket)
                            "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
                            "DELETE-ROOM" };
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
-    while (write(1, "Command:\n", 9) && (command = my_getline()) != NULL)
+
+    // Use while 1 instead then do parsing to prevent eof check.
+    while (1)
     {
+        write(1, "Command:\n", 9);
+        command = my_getline();
+
+        if (!command)
+            continue;
+
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
 
@@ -352,7 +360,7 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            //fprintf(stdout, "Parameters:\n");
+            fprintf(stdout, "Parameters:\n");
             get_params(params);
             get_payload(params, command, server_socket, send);
         }
