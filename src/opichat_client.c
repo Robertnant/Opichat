@@ -200,14 +200,15 @@ void communicate(int server_socket)
     char *lineptr = NULL;
     size_t n = 0;
     char *send = NULL;
-    char *commands[10] = {
-        "PING","LIST-USERS", "LIST-ROOMS", "PROFILE","LOGIN", "BROADCAST", "CREATE-ROOM",
-        "JOIN-ROOM", "LEAVE-ROOM", "DELETE-ROOM"
-    };
-    char *args_commands[2] = {"SEND-DM", "SEND-ROOM"};
+    char *commands[10] = { "PING",        "LIST-USERS", "LIST-ROOMS",
+                           "PROFILE",     "LOGIN",      "BROADCAST",
+                           "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
+                           "DELETE-ROOM" };
+    char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
     while (puts("Command:") && (res = getline(&lineptr, &n, stdin)) != -1)
     {
-        struct params_payload *params = xcalloc(1, sizeof(struct params_payload));
+        struct params_payload *params =
+            xcalloc(1, sizeof(struct params_payload));
 
         char *command = NULL;
         lineptr[res - 1] = '\0';
@@ -234,24 +235,29 @@ void communicate(int server_socket)
                     if (r)
                     {
                         r[strlen(r) - 1] = '\0';
-                        params->params = add_param(params->params, lineptr, NULL);
+                        params->params =
+                            add_param(params->params, lineptr, NULL);
                     }
                 }
             }
-            while (puts("Payload:") && (res = getline(&lineptr, &n, stdin)) != -1)
+            while (puts("Payload:")
+                   && (res = getline(&lineptr, &n, stdin)) != -1)
             {
                 lineptr[res - 1] = '\0';
-                if (strcmp(lineptr, "/quit\n") == 0)
+                if (strcmp(lineptr, "/quit") == 0)
                 {
                     break;
                 }
-                params->payload = lineptr;
+                asprintf(&params->payload, "%s", lineptr);
                 send = gen_message(strlen(lineptr), 0, command, params);
+                resend(send, strlen(send), server_socket);
+                free(send);
+                send = NULL;
             }
         }
         else if (is_in(lineptr, commands, 10) == 0)
         {
-            if (is_in(lineptr, commands, 4) == 0 )
+            if (is_in(lineptr, commands, 4) == 0)
             {
                 send = gen_message(0, 0, command, params);
             }
@@ -263,16 +269,17 @@ void communicate(int server_socket)
                 send = gen_message(strlen(lineptr), 0, command, params);
             }
         }
+        else
+        {
+            write(2, "Invalid command\n", 16);
+        }
 
         if (send)
         {
-            puts(send);
             resend(send, strlen(send), server_socket);
             free(send);
             send = NULL;
         }
-        else
-            write(2, "Invalid command\n", 16);
 
         // Free elements.
         free(command);
