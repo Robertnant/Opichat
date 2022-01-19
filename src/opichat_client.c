@@ -304,7 +304,7 @@ void get_payload(struct params_payload *params, char *command,
 {
     char *payload = NULL;
 
-    while (write(1, "Payload:\n", 9) && (payload = my_getline()) != NULL)
+    while (fprintf(stdout, "Payload:\n") && (payload = my_getline()) != NULL)
     {
         if (strcmp(payload, "/quit") == 0)
         {
@@ -345,14 +345,8 @@ void communicate(int server_socket)
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
 
     // Use while 1 instead then do parsing to prevent eof check.
-    while (1)
+    while (fprintf(stdout, "Command:\n") && (command = my_getline()) != NULL)
     {
-        write(1, "Command:\n", 9);
-        command = my_getline();
-
-        if (!command)
-            continue;
-
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
 
@@ -367,7 +361,7 @@ void communicate(int server_socket)
         else if (is_in(command, commands, 10) == 0)
         {
             // TODO Use different payload (so make code cleaner).
-            write(1, "Payload:\n", 9);
+            fprintf(stdout, "Payload:\n");
             char *payload = my_getline();
 
             if (payload)
@@ -384,7 +378,7 @@ void communicate(int server_socket)
         }
         else
         {
-            write(2, "Invalid command\n", 16);
+            fprintf(stderr, "Invalid command\n");
             // fflush(stdin);
         }
 
