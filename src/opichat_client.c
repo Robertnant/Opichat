@@ -207,7 +207,7 @@ void get_params(struct params_payload *p)
 
         int c;
         size_t n = 0;
-        while ((c = getchar()) != '\n' && c != EOF)
+        while ((c = getchar()) != '\n')
         {
             lineptr[n] = c;
             n++;
@@ -221,7 +221,7 @@ void get_params(struct params_payload *p)
 
         if (n == 0)
         {
-            fprintf(stderr, "Timeout yo\n");
+            fprintf(stderr, "Timeout yo");
             timeout--;
         }
         else
