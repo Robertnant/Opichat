@@ -205,7 +205,8 @@ void communicate(int server_socket)
                            "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
                            "DELETE-ROOM" };
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
-    while (puts("Command:") && (res = getline(&lineptr, &n, stdin)) != -1)
+    while (write(1, "Command:\n", 9)
+           && (res = getline(&lineptr, &n, stdin)) != -1)
     {
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
