@@ -223,11 +223,61 @@ void get_params(struct params_payload *p)
                 p->params = add_param(p->params, lineptr, NULL);
             }
         }
+
+        fflush(stdin);
     }
 
     free(lineptr);
     lineptr = NULL;
     n = 0;
+}
+
+void get_payload(struct params_payload *params, char *command,
+                 int server_socket, char *send)
+{
+    char *payload = NULL;
+    size_t size = 0;
+    ssize_t res = 0;
+
+    /*
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+    {
+        size++;
+    }
+    */
+
+    while (write(1, "Payload:\n", 9)
+           && (res = getline(&payload, &size, stdin)) != -1)
+    {
+        ssize_t count = 0;
+        while (count < res && payload[count] != '\n')
+        {
+            count++;
+        }
+
+        if (count < res)
+        {
+            payload[count] = '\0';
+        }
+
+        if (strcmp(payload, "/quit") == 0)
+        {
+            fflush(stdin);
+            break;
+        }
+
+        asprintf(&params->payload, "%s", payload);
+        send = gen_message(strlen(payload), 0, command, params);
+        resend(send, strlen(send), server_socket);
+        free(send);
+        send = NULL;
+
+        // Clear stdin buffer.
+        fflush(stdin);
+    }
+    free(payload);
+    payload = NULL;
 }
 
 // TODO Find out what case for parameters is valid but returning false
@@ -257,57 +307,39 @@ void communicate(int server_socket)
         lineptr = NULL;
         n = 0;
 
+        fflush(stdin);
+
         if (is_in(command, args_commands, 2) == 0)
         {
             write(1, "Parameters:\n", 12);
             get_params(params);
-
-            char *payload = NULL;
-            size_t size = 0;
-            while (write(1, "Payload:\n", 9)
-                   && (res = getline(&payload, &size, stdin)) != -1)
-            {
-                size_t count = 0;
-                while (count < size && payload[count] != '\n')
-                {
-                    count++;
-                }
-
-                if (count < size)
-                {
-                    payload[res - 1] = '\0';
-                }
-
-                if (strcmp(payload, "/quit") == 0)
-                {
-                    free(payload);
-                    payload = NULL;
-                    n = 0;
-                    break;
-                }
-                asprintf(&params->payload, "%s", payload);
-                send = gen_message(strlen(payload), 0, command, params);
-                resend(send, strlen(send), server_socket);
-                free(send);
-                send = NULL;
-            }
-            free(payload);
-            payload = NULL;
-            n = 0;
+            get_payload(params, command, server_socket, send);
         }
         else if (is_in(command, commands, 10) == 0)
         {
+            // TODO Use different payload (so make code cleaner).
             n = 0;
             write(1, "Payload:\n", 9);
             res = getline(&lineptr, &n, stdin);
 
             if (res != -1)
             {
-                lineptr[res - 1] = '\0';
+                ssize_t count = 0;
+                while (count < res && lineptr[count] != '\n')
+                {
+                    count++;
+                }
+
+                if (count < res)
+                {
+                    lineptr[res - 1] = '\0';
+                }
+
                 asprintf(&params->payload, "%s", lineptr);
                 send = gen_message(strlen(lineptr), 0, command, params);
             }
 
+            fflush(stdin);
             free(lineptr);
             lineptr = NULL;
             n = 0;
@@ -315,12 +347,7 @@ void communicate(int server_socket)
         else
         {
             write(2, "Invalid command\n", 16);
-            if (lineptr)
-            {
-                free(lineptr);
-                lineptr = NULL;
-                n = 0;
-            }
+            fflush(stdin);
         }
 
         if (send)
