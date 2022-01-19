@@ -233,7 +233,7 @@ void communicate(int server_socket)
                 {
                     // char *r = strstr(lineptr, "=");
 
-                    if (r)
+                    if (1)
                     {
                         r[strlen(r) - 1] = '\0';
                         params->params =
