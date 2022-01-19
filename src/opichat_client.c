@@ -348,7 +348,7 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            // write(1, "Parameters:\n", 12);
+            write(1, "Parameters:\n", 12);
             get_params(params);
             get_payload(params, command, server_socket, send);
         }
