@@ -192,9 +192,9 @@ int is_valid_param(char *param)
         return 1;
     }
 
-    printf("This param%sEND", param);
-
     *r = '=';
+    write(1, param, strlen(param));
+
     return 0;
 }
 
