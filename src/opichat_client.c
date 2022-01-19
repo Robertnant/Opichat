@@ -225,7 +225,7 @@ void get_params(struct params_payload *p)
 
         int c;
         size_t n = 0;
-        while ((c = getchar()) != '\n' && c != EOF)
+        while ((c = getchar()) != '\n')
         {
             lineptr[n] = c;
             n++;
@@ -317,6 +317,8 @@ void get_payload(struct params_payload *params, char *command,
     payload = NULL;
 }
 
+// If no newline in param, skip don't do anything (or just stop looking
+// for param).
 // TODO Find out what case for parameters is valid but returning false
 // in code.
 void communicate(int server_socket)
