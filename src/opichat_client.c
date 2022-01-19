@@ -258,17 +258,12 @@ void communicate(int server_socket)
         }
         else if (is_in(lineptr, commands, 10) == 0)
         {
-            if (is_in(lineptr, commands, 4) == 0)
-            {
-                send = gen_message(0, 0, command, params);
-            }
-            else
-            {
-                res = getline(&lineptr, &n, stdin);
-                lineptr[res - 1] = '\0';
-                asprintf(&params->payload, "%s", lineptr);
-                send = gen_message(strlen(lineptr), 0, command, params);
-            }
+            write(1, "Payload:\n", 9);
+            res = getline(&lineptr, &n, stdin);
+            lineptr[res - 1] = '\0';
+            asprintf(&params->payload, "%s", lineptr);
+
+            send = gen_message(strlen(lineptr), 0, command, params);
         }
         else
         {
