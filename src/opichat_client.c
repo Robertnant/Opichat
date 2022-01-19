@@ -238,21 +238,26 @@ void get_params(struct params_payload *p)
         }
 
         if (n == 0)
-            timeout--;
-
-        // lineptr[n] = '\0';
-        if (is_valid_param(lineptr) == 0)
         {
-            write(2, "Invalid parameter\n", 18);
+            timeout--;
         }
         else
         {
-            char *r = strstr(lineptr, "=");
-
-            if (r)
+            // lineptr[n] = '\0';
+            if (is_valid_param(lineptr) == 0)
             {
-                r[strlen(r) - 1] = '\0';
-                p->params = add_param(p->params, lineptr, NULL);
+                write(2, "Invalid parameter\n", 18);
+                // fflush(sttderr)
+            }
+            else
+            {
+                char *r = strstr(lineptr, "=");
+
+                if (r)
+                {
+                    r[strlen(r) - 1] = '\0';
+                    p->params = add_param(p->params, lineptr, NULL);
+                }
             }
         }
 
