@@ -259,9 +259,12 @@ void communicate(int server_socket)
                 n = 0;
             }
 
-            free(lineptr);
-            lineptr = NULL;
-            n = 0;
+            if (lineptr)
+            {
+                free(lineptr);
+                lineptr = NULL;
+                n = 0;
+            }
             while (write(1, "Payload:\n", 9)
                    && (res = getline(&lineptr, &n, stdin)) != -1)
             {
@@ -304,6 +307,12 @@ void communicate(int server_socket)
         else
         {
             write(2, "Invalid command\n", 16);
+            if (lineptr)
+            {
+                free(lineptr);
+                lineptr = NULL;
+                n = 0;
+            }
         }
 
         if (send)
@@ -311,6 +320,13 @@ void communicate(int server_socket)
             resend(send, strlen(send), server_socket);
             free(send);
             send = NULL;
+        }
+
+        if (lineptr)
+        {
+            free(lineptr);
+            lineptr = NULL;
+            n = 0;
         }
 
         // Free elements.
