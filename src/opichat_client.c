@@ -303,40 +303,31 @@ void get_payload(struct params_payload *params, char *command,
                  int server_socket, char *send)
 {
     char *payload = NULL;
-    size_t size = 0;
-    ssize_t res = 0;
 
-    while (write(1, "Payload:\n", 9)
-           && (res = getline(&payload, &size, stdin)) > 0)
+    while (write(1, "Payload:\n", 9) && (payload = my_getline()) != NULL)
     {
-        ssize_t count = 0;
-        while (count < res && payload[count] != '\n')
-        {
-            count++;
-        }
-
-        if (count < res)
-        {
-            payload[count] = '\0';
-        }
-
         if (strcmp(payload, "/quit") == 0)
         {
-            fflush(stdin);
+            // fflush(stdin);
             break;
         }
 
-        asprintf(&params->payload, "%s", payload);
+        if (payload[0] != '\n')
+            asprintf(&params->payload, "%s", payload);
+        else
+            payload[0] = '\0';
+
         send = gen_message(strlen(payload), 0, command, params);
         resend(send, strlen(send), server_socket);
         free(send);
         send = NULL;
 
         // Clear stdin buffer.
-        fflush(stdin);
+        // fflush(stdin);
     }
-    free(payload);
-    payload = NULL;
+
+    if (payload)
+        free(payload);
 }
 
 // If no newline in param, skip don't do anything (or just stop looking
@@ -345,9 +336,6 @@ void get_payload(struct params_payload *params, char *command,
 // in code.
 void communicate(int server_socket)
 {
-    ssize_t res;
-    char *lineptr = NULL;
-    size_t n = 0;
     char *send = NULL;
     char *command = NULL;
     char *commands[10] = { "PING",        "LIST-USERS", "LIST-ROOMS",
@@ -360,7 +348,7 @@ void communicate(int server_socket)
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
 
-        fflush(stdin);
+        // fflush(stdin);
 
         if (is_in(command, args_commands, 2) == 0)
         {
@@ -371,36 +359,25 @@ void communicate(int server_socket)
         else if (is_in(command, commands, 10) == 0)
         {
             // TODO Use different payload (so make code cleaner).
-            n = 0;
             write(1, "Payload:\n", 9);
-            res = getline(&lineptr, &n, stdin);
+            char *payload = my_getline();
 
-            if (res > 0)
+            if (payload)
             {
-                ssize_t count = 0;
-                while (count < res && lineptr[count] != '\n')
-                {
-                    count++;
-                }
+                if (payload[0] != '\n')
+                    asprintf(&params->payload, "%s", payload);
+                else
+                    payload[0] = '\0';
 
-                if (count < res)
-                {
-                    lineptr[res - 1] = '\0';
-                }
-
-                asprintf(&params->payload, "%s", lineptr);
-                send = gen_message(strlen(lineptr), 0, command, params);
+                send = gen_message(strlen(payload), 0, command, params);
+                free(payload);
             }
-
-            fflush(stdin);
-            free(lineptr);
-            lineptr = NULL;
-            n = 0;
+            // fflush(stdin);
         }
         else
         {
             write(2, "Invalid command\n", 16);
-            fflush(stdin);
+            // fflush(stdin);
         }
 
         if (send)
@@ -410,26 +387,12 @@ void communicate(int server_socket)
             send = NULL;
         }
 
-        if (lineptr)
-        {
-            free(lineptr);
-            lineptr = NULL;
-            n = 0;
-        }
-
         // Free elements.
         if (command)
             free(command);
 
         if (params)
             free_payload(params);
-    }
-
-    if (lineptr != NULL)
-    {
-        free(lineptr);
-        lineptr = NULL;
-        n = 0;
     }
 }
 
