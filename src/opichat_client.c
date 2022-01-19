@@ -187,8 +187,6 @@ int is_in(char *str, char **tab, size_t size)
 // Checks parameter validity. Parameter must contain new line..
 int is_valid_param(char *param)
 {
-    write(2, "Param:\n", 7);
-    write(2, param, strlen(param));
     if (strlen(param) == 1)
         return 1;
 
@@ -350,6 +348,7 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
+            // write(1, "Parameters:\n", 12);
             get_params(params);
             get_payload(params, command, server_socket, send);
         }
