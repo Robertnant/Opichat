@@ -215,13 +215,14 @@ int is_valid_param(char *param)
 
 void get_params(struct params_payload *p)
 {
-    char *lineptr = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
-    size_t size = DEFAULT_BUFFER_SIZE;
-
     int timeout = 2;
+    char *lineptr = NULL;
 
     while (timeout)
     {
+        lineptr = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
+        size_t size = DEFAULT_BUFFER_SIZE;
+
         int c;
         size_t n = 0;
         while ((c = getchar()) != '\n' && c != EOF)
@@ -254,10 +255,21 @@ void get_params(struct params_payload *p)
                 p->params = add_param(p->params, lineptr, NULL);
             }
         }
+
+        if (lineptr)
+        {
+            free(lineptr);
+            lineptr = NULL;
+        }
+
+        // fflush(stdin);
     }
 
-    free(lineptr);
-    lineptr = NULL;
+    if (lineptr)
+    {
+        free(lineptr);
+        lineptr = NULL;
+    }
 }
 
 void get_payload(struct params_payload *params, char *command,
