@@ -197,6 +197,39 @@ int is_valid_param(char *param)
     return 0;
 }
 
+void get_params(struct params_payload *p)
+{
+    char *lineptr = NULL;
+    int timeout = 2;
+    size_t n = 0;
+    ssize_t res = 0;
+
+    while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
+    {
+        if (res == 1 || res == 0)
+            timeout--;
+
+        if (is_valid_param(lineptr) == 0)
+        {
+            write(2, "Invalid parameter\n", 18);
+        }
+        else
+        {
+            char *r = strstr(lineptr, "=");
+
+            if (r)
+            {
+                r[strlen(r) - 1] = '\0';
+                p->params = add_param(p->params, lineptr, NULL);
+            }
+        }
+    }
+
+    free(lineptr);
+    lineptr = NULL;
+    n = 0;
+}
+
 // TODO Find out what case for parameters is valid but returning false
 // in code.
 void communicate(int server_socket)
@@ -226,44 +259,9 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            int timeout = 2;
-
             write(1, "Parameters:\n", 12);
-            n = 0;
-            while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
-            {
-                if (strstr(lineptr, "\n\n"))
-                    break;
-                if (res == 1 || res == 0)
-                    timeout--;
+            get_params(params);
 
-                if (is_valid_param(lineptr) == 0)
-                {
-                    fprintf(stderr, "Invalid parameter\n");
-                }
-                else
-                {
-                    char *r = strstr(lineptr, "=");
-
-                    if (r)
-                    {
-                        r[strlen(r) - 1] = '\0';
-                        params->params =
-                            add_param(params->params, lineptr, NULL);
-                    }
-                }
-
-                free(lineptr);
-                lineptr = NULL;
-                n = 0;
-            }
-
-            if (lineptr)
-            {
-                free(lineptr);
-                lineptr = NULL;
-                n = 0;
-            }
             while (write(1, "Payload:\n", 9)
                    && (res = getline(&lineptr, &n, stdin)) != -1)
             {
@@ -305,7 +303,7 @@ void communicate(int server_socket)
         }
         else
         {
-            fprintf(stderr, "Invalid command\n");
+            write(2, "Invalid command\n", 16);
             if (lineptr)
             {
                 free(lineptr);
