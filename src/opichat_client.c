@@ -197,76 +197,79 @@ int is_valid_param(char *param)
 void communicate(int server_socket)
 {
     ssize_t res;
-    char *param = NULL;
-    char *command = NULL;
-    char *payload = NULL;
+    char *lineptr = NULL;
     size_t n = 0;
     char *send = NULL;
-    char *commands[10] = { "PING\n",        "LIST-USERS\n", "LIST-ROOMS\n",
-                           "PROFILE\n",     "LOGIN\n",      "BROADCAST\n",
-                           "CREATE-ROOM\n", "JOIN-ROOM\n",  "LEAVE-ROOM\n",
-                           "DELETE-ROOM\n" };
-    char *args_commands[2] = { "SEND-DM\n", "SEND-ROOM\n" };
-
+    char *commands[10] = { "PING",        "LIST-USERS", "LIST-ROOMS",
+                           "PROFILE",     "LOGIN",      "BROADCAST",
+                           "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
+                           "DELETE-ROOM" };
+    char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
     while (write(1, "Command:\n", 9)
-           && (res = getline(&command, &n, stdin)) != -1)
+           && (res = getline(&lineptr, &n, stdin)) != -1)
     {
+        n = 0;
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
 
-        n = 0;
-        if (is_in(command, args_commands, 2) == 0)
+        char *command = NULL;
+        lineptr[res - 1] = '\0';
+        asprintf(&command, "%s", lineptr);
+
+        if (is_in(lineptr, args_commands, 2) == 0)
         {
             int timeout = 2;
 
             write(1, "Parameters:\n", 12);
-
-            while (timeout && (res = getline(&param, &n, stdin)) != -1)
+            n = 0;
+            while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
             {
                 if (res == 1)
                     timeout--;
 
-                if (!is_valid_param(param))
+                if (!is_valid_param(lineptr))
                 {
                     write(2, "Invalid parameter\n", 18);
                 }
                 else
                 {
-                    char *r = strstr(param, "=");
+                    char *r = strstr(lineptr, "=");
 
                     if (r)
                     {
-                        param[res - 1] = '\0';
-                        params->params = add_param(params->params, param, NULL);
+                        r[strlen(r) - 1] = '\0';
+                        params->params =
+                            add_param(params->params, lineptr, NULL);
                     }
                 }
             }
-
             n = 0;
             while (write(1, "Payload:\n", 9)
-                   && (res = getline(&payload, &n, stdin)) != -1)
+                   && (res = getline(&lineptr, &n, stdin)) != -1)
             {
-                payload[res - 1] = '\0';
-                if (strcmp(payload, "/quit") == 0)
+                lineptr[res - 1] = '\0';
+                if (strcmp(lineptr, "/quit") == 0)
                 {
                     break;
+                    n = 0;
                 }
-                asprintf(&params->payload, "%s", payload);
-                send = gen_message(strlen(payload), 0, command, params);
+                asprintf(&params->payload, "%s", lineptr);
+                send = gen_message(strlen(lineptr), 0, command, params);
                 resend(send, strlen(send), server_socket);
-                // free(send);
-                // send = NULL;
+                free(send);
+                send = NULL;
+                n = 0;
             }
         }
-        else if (is_in(command, commands, 10) == 0)
+        else if (is_in(lineptr, commands, 10) == 0)
         {
             n = 0;
             write(1, "Payload:\n", 9);
-            res = getline(&payload, &n, stdin);
-            payload[res - 1] = '\0';
-            asprintf(&params->payload, "%s", payload);
+            res = getline(&lineptr, &n, stdin);
+            lineptr[res - 1] = '\0';
+            asprintf(&params->payload, "%s", lineptr);
 
-            send = gen_message(strlen(payload), 0, command, params);
+            send = gen_message(strlen(lineptr), 0, command, params);
         }
         else
         {
@@ -280,21 +283,17 @@ void communicate(int server_socket)
             send = NULL;
         }
 
-        n = 0;
-
         // Free elements.
-        // free(command);
-        // if (params)
-        //    free_payload(params);
+        free(command);
+        if (params)
+            free_payload(params);
     }
 
-    /*
     if (lineptr != NULL)
     {
         free(lineptr);
         lineptr = NULL;
     }
-    */
 }
 
 /*
