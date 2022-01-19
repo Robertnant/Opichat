@@ -187,6 +187,8 @@ int is_in(char *str, char **tab, size_t size)
 // Checks parameter validity. Parameter must contain new line..
 int is_valid_param(char *param)
 {
+    write(2, "Param:\n", 7);
+    write(2, param, strlen(param));
     if (strlen(param) == 1)
         return 1;
 
