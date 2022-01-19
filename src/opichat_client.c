@@ -239,8 +239,7 @@ void communicate(int server_socket)
 
                 if (is_valid_param(lineptr) == 0)
                 {
-                    write(2, lineptr, strlen(lineptr));
-                    write(2, "Invalid parameter\n", 18);
+                    fprintf(stderr, "Invalid parameter\n");
                 }
                 else
                 {
@@ -306,7 +305,7 @@ void communicate(int server_socket)
         }
         else
         {
-            write(2, "Invalid command\n", 16);
+            fprintf(stderr, "Invalid command\n");
             if (lineptr)
             {
                 free(lineptr);
