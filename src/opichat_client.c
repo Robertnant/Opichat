@@ -208,7 +208,6 @@ void communicate(int server_socket)
     while (write(1, "Command:\n", 9)
            && (res = getline(&lineptr, &n, stdin)) != -1)
     {
-        n = 0;
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
 
@@ -216,7 +215,11 @@ void communicate(int server_socket)
         lineptr[res - 1] = '\0';
         asprintf(&command, "%s", lineptr);
 
-        if (is_in(lineptr, args_commands, 2) == 0)
+        free(lineptr);
+        lineptr = NULL;
+        n = 0;
+
+        if (is_in(command, args_commands, 2) == 0)
         {
             int timeout = 2;
 
@@ -242,6 +245,10 @@ void communicate(int server_socket)
                             add_param(params->params, lineptr, NULL);
                     }
                 }
+
+                free(lineptr);
+                lineptr = NULL;
+                n = 0;
             }
             n = 0;
             while (write(1, "Payload:\n", 9)
@@ -250,18 +257,23 @@ void communicate(int server_socket)
                 lineptr[res - 1] = '\0';
                 if (strcmp(lineptr, "/quit") == 0)
                 {
-                    break;
+                    free(lineptr);
+                    lineptr = NULL;
                     n = 0;
+                    break;
                 }
                 asprintf(&params->payload, "%s", lineptr);
                 send = gen_message(strlen(lineptr), 0, command, params);
                 resend(send, strlen(send), server_socket);
                 free(send);
                 send = NULL;
+
+                free(lineptr);
+                lineptr = NULL;
                 n = 0;
             }
         }
-        else if (is_in(lineptr, commands, 10) == 0)
+        else if (is_in(command, commands, 10) == 0)
         {
             n = 0;
             write(1, "Payload:\n", 9);
@@ -270,6 +282,10 @@ void communicate(int server_socket)
             asprintf(&params->payload, "%s", lineptr);
 
             send = gen_message(strlen(lineptr), 0, command, params);
+
+            free(lineptr);
+            lineptr = NULL;
+            n = 0;
         }
         else
         {
@@ -293,6 +309,7 @@ void communicate(int server_socket)
     {
         free(lineptr);
         lineptr = NULL;
+        n = 0;
     }
 }
 
