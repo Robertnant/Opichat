@@ -177,22 +177,9 @@ int is_valid_param(char *param)
         return 1;
 
     char *r = strstr(param, "=");
-    int cond1 = r && r != param && (strlen(r) > 1);
 
-    if (!cond1)
-        return 0;
-
-    int curr_len = strlen(r);
-
-    *r = '\0';
-
-    if (strlen(param) > 0 && (curr_len > 1))
-    {
-        *r = '=';
+    if (r)
         return 1;
-    }
-
-    *r = '=';
 
     return 0;
 }
@@ -235,14 +222,16 @@ void communicate(int server_socket)
                 if (res == 1)
                     timeout--;
 
+                /*
                 if (is_valid_param(lineptr) == 0)
                 {
-                    write(2, lineptr, strlen(lineptr));
+                    // write(2, lineptr, strlen(lineptr));
                     write(2, "Invalid parameter\n", 18);
                 }
+                */
                 else
                 {
-                    char *r = strstr(lineptr, "=");
+                    // char *r = strstr(lineptr, "=");
 
                     if (r)
                     {
