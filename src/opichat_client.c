@@ -171,6 +171,46 @@ void communicate(int server_socket)
         free(lineptr);
 }*/
 
+// My getline.
+char *my_getline()
+{
+    char *lineptr = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
+    size_t size = DEFAULT_BUFFER_SIZE;
+
+    int c;
+    size_t n = 0;
+    while ((c = getchar()) != '\n' && c != EOF)
+    {
+        lineptr[n] = c;
+        n++;
+
+        if (n >= size)
+        {
+            lineptr = xrealloc(lineptr, size * 2);
+            size *= 2;
+        }
+    }
+
+    if (n == 0)
+    {
+        if (c == '\n')
+        {
+            lineptr[0] = '\n';
+        }
+        else
+        {
+            free(lineptr);
+            lineptr = NULL;
+        }
+    }
+    else
+    {
+        lineptr[n] = '\0';
+    }
+
+    return lineptr;
+}
+
 // Check if str is in tab
 int is_in(char *str, char **tab, size_t size)
 {
@@ -207,7 +247,7 @@ void get_params(struct params_payload *p)
 
         int c;
         size_t n = 0;
-        while ((c = getchar()) != '\n')
+        while ((c = getchar()) != '\n' && c != EOF)
         {
             lineptr[n] = c;
             n++;
@@ -221,7 +261,6 @@ void get_params(struct params_payload *p)
 
         if (n == 0)
         {
-            fprintf(stderr, "Timeout yo");
             timeout--;
         }
         else
@@ -229,13 +268,11 @@ void get_params(struct params_payload *p)
             // lineptr[n] = '\0';
             if (is_valid_param(lineptr) == 0)
             {
-                fprintf(stderr, "Param: %s\n", lineptr);
                 fprintf(stderr, "Invalid parameter\n");
                 // fflush(sttderr)
             }
             else
             {
-                fprintf(stderr, "Param: %s\n", lineptr);
                 char *r = strstr(lineptr, "=");
 
                 if (r)
@@ -312,30 +349,21 @@ void communicate(int server_socket)
     char *lineptr = NULL;
     size_t n = 0;
     char *send = NULL;
+    char *command = NULL;
     char *commands[10] = { "PING",        "LIST-USERS", "LIST-ROOMS",
                            "PROFILE",     "LOGIN",      "BROADCAST",
                            "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
                            "DELETE-ROOM" };
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
-    while (write(1, "Command:\n", 9)
-           && (res = getline(&lineptr, &n, stdin)) > 0)
+    while (write(1, "Command:\n", 9) && (command = my_getline()) != NULL)
     {
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
-
-        char *command = NULL;
-        lineptr[res - 1] = '\0';
-        asprintf(&command, "%s", lineptr);
-
-        free(lineptr);
-        lineptr = NULL;
-        n = 0;
 
         fflush(stdin);
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            fprintf(stderr, "Command found: %s\n", command);
             fprintf(stdout, "Parameters:\n");
             get_params(params);
             get_payload(params, command, server_socket, send);
@@ -390,7 +418,9 @@ void communicate(int server_socket)
         }
 
         // Free elements.
-        free(command);
+        if (command)
+            free(command);
+
         if (params)
             free_payload(params);
     }
