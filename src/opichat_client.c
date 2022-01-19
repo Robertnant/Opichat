@@ -278,11 +278,14 @@ void communicate(int server_socket)
             n = 0;
             write(1, "Payload:\n", 9);
             res = getline(&lineptr, &n, stdin);
-            lineptr[res - 1] = '\0';
-            asprintf(&params->payload, "%s", lineptr);
 
-            send = gen_message(strlen(lineptr), 0, command, params);
+            if (res != -1)
+            {
+                lineptr[res - 1] = '\0';
+                asprintf(&params->payload, "%s", lineptr);
 
+                send = gen_message(strlen(lineptr), 0, command, params);
+            }
             free(lineptr);
             lineptr = NULL;
             n = 0;
