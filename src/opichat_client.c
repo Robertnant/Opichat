@@ -235,7 +235,7 @@ void communicate(int server_socket)
 
                     if (1)
                     {
-                        r[strlen(r) - 1] = '\0';
+                        // r[strlen(r) - 1] = '\0';
                         params->params =
                             add_param(params->params, lineptr, NULL);
                     }
