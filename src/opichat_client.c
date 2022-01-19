@@ -193,7 +193,6 @@ int is_valid_param(char *param)
     }
 
     *r = '=';
-    write(1, param, strlen(param));
 
     return 0;
 }
@@ -238,6 +237,7 @@ void communicate(int server_socket)
 
                 if (is_valid_param(lineptr) == 0)
                 {
+                    write(2, lineptr, strlen(lineptr));
                     write(2, "Invalid parameter\n", 18);
                 }
                 else
