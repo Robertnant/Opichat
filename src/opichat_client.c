@@ -184,8 +184,6 @@ int is_valid_param(char *param)
 
     int curr_len = strlen(r);
 
-    printf("This param%sEND", param);
-
     *r = '\0';
 
     if (strlen(param) > 0 && (curr_len > 1))
@@ -193,6 +191,8 @@ int is_valid_param(char *param)
         *r = '=';
         return 1;
     }
+
+    printf("This param%sEND", param);
 
     *r = '=';
     return 0;
