@@ -197,7 +197,6 @@ int is_valid_param(char *param)
 void communicate(int server_socket)
 {
     ssize_t res;
-    char *lineptr = NULL;
     char *param = NULL;
     char *command = NULL;
     char *payload = NULL;
@@ -248,18 +247,18 @@ void communicate(int server_socket)
                    && (res = getline(&payload, &n, stdin)) != -1)
             {
                 payload[res - 1] = '\0';
-                if (strcmp(lineptr, "/quit") == 0)
+                if (strcmp(payload, "/quit") == 0)
                 {
                     break;
                 }
-                asprintf(&params->payload, "%s", lineptr);
+                asprintf(&params->payload, "%s", payload);
                 send = gen_message(strlen(payload), 0, command, params);
                 resend(send, strlen(send), server_socket);
                 // free(send);
                 // send = NULL;
             }
         }
-        else if (is_in(lineptr, commands, 10) == 0)
+        else if (is_in(command, commands, 10) == 0)
         {
             n = 0;
             write(1, "Payload:\n", 9);
