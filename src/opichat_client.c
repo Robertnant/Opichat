@@ -65,6 +65,18 @@ void resend(const char *buff, size_t len, int fd)
     }
 }
 
+char *find_param(char **tokens, char *param, int size)
+{
+    char *res = NULL;
+    for (int i = 0; i < size; i++)
+    {
+        res = strstr(tokens[i], param);
+        if (res)
+            break;
+    }
+
+    return res;
+}
 // Parse response from server
 void *parse_message(void *arg)
 {
@@ -108,28 +120,30 @@ void *parse_message(void *arg)
                 case 2:
                     if (strcmp(tokens[2], "SEND-DM") == 0)
                     {
-                        tokens[4][4] = ' ';
+                        char *param = find_param(tokens, "From=", count);
+                        param[4] = ' ';
                         // Utiliser write
                         char *res = NULL;
-                        size_t len =
-                            asprintf(&res, "%s: %s\n", tokens[4], payload);
+                        size_t len = asprintf(&res, "%s: %s\n", param, payload);
                         write(1, res, len);
                     }
                     if (strcmp(tokens[2], "BROADCAST") == 0)
                     {
-                        tokens[3][4] = ' ';
+                        char *param = find_param(tokens, "From=", count);
+                        param[4] = ' ';
                         char *res = NULL;
-                        size_t len =
-                            asprintf(&res, "%s: %s\n", tokens[3], payload);
+                        size_t len = asprintf(&res, "%s: %s\n", param, payload);
                         write(1, res, len);
                     }
                     if (strcmp(tokens[2], "SEND-ROOM") == 0)
                     {
-                        tokens[4][4] = ' ';
-                        tokens[3] += 5;
+                        char *param1 = find_param(tokens, "From=", count);
+                        param1[4] = ' ';
+                        char *param2 = find_param(tokens, "Room=", count);
+                        param2 += 5;
                         char *res = NULL;
-                        size_t len = asprintf(&res, "%s@%s: %s\n", tokens[4],
-                                              tokens[3], payload);
+                        size_t len = asprintf(&res, "%s@%s: %s\n", param1,
+                                              param2, payload);
                         write(1, res, len);
                     }
                     break;
