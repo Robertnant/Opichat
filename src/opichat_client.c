@@ -352,7 +352,7 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            fprintf(stdout, "Parameters:\n");
+            //fprintf(stdout, "Parameters:\n");
             get_params(params);
             get_payload(params, command, server_socket, send);
         }
