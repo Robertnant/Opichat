@@ -213,16 +213,31 @@ int is_valid_param(char *param)
 
 void get_params(struct params_payload *p)
 {
-    char *lineptr = NULL;
-    int timeout = 2;
-    size_t n = 0;
-    ssize_t res = 0;
+    char *lineptr = xcalloc(DEFAULT_BUFFER_SIZE, sizeof(char));
+    size_t size = DEFAULT_BUFFER_SIZE;
 
-    while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
+    int timeout = 2;
+
+    while (timeout)
     {
-        if (res == 1 || res == 0)
+        int c;
+        size_t n = 0;
+        while ((c = getchar()) != '\n' && c != EOF)
+        {
+            lineptr[n] = c;
+            n++;
+
+            if (n >= size)
+            {
+                lineptr = xrealloc(lineptr, size * 2);
+                size *= 2;
+            }
+        }
+
+        if (n == 0)
             timeout--;
 
+        // lineptr[n] = '\0';
         if (is_valid_param(lineptr) == 0)
         {
             write(2, "Invalid parameter\n", 18);
@@ -237,13 +252,10 @@ void get_params(struct params_payload *p)
                 p->params = add_param(p->params, lineptr, NULL);
             }
         }
-
-        fflush(stdin);
     }
 
     free(lineptr);
     lineptr = NULL;
-    n = 0;
 }
 
 void get_payload(struct params_payload *params, char *command,
@@ -252,14 +264,6 @@ void get_payload(struct params_payload *params, char *command,
     char *payload = NULL;
     size_t size = 0;
     ssize_t res = 0;
-
-    /*
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) { }
-    {
-        size++;
-    }
-    */
 
     while (write(1, "Payload:\n", 9)
            && (res = getline(&payload, &size, stdin)) != -1)
