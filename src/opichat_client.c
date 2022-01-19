@@ -184,12 +184,10 @@ int is_valid_param(char *param)
 
     *r = '\0';
     int curr_len = strlen(r + 1);
-    r[curr_len] = '\0';
 
-    int cond2 = strlen(param) && strlen(r + 1);
+    int cond2 = strlen(param) && curr_len;
 
     *r = '=';
-    r[curr_len] = '\n';
 
     return cond2;
 }
