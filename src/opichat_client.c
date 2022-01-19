@@ -228,6 +228,7 @@ void get_params(struct params_payload *p)
             // lineptr[n] = '\0';
             if (is_valid_param(lineptr) == 0)
             {
+                fprintf(stderr, "Param: %s\n", lineptr);
                 fprintf(stderr, "Invalid parameter\n");
                 // fflush(sttderr)
             }
@@ -332,6 +333,7 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
+            fprintf(stderr, "Command found: %s\n", command);
             fprintf(stdout, "Parameters:\n");
             get_params(params);
             get_payload(params, command, server_socket, send);
