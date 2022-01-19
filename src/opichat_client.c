@@ -177,9 +177,22 @@ int is_valid_param(char *param)
         return 1;
 
     char *r = strstr(param, "=");
+    int cond1 = r && r != param && (strlen(r) > 1);
 
-    if (r)
+    if (!cond1)
+        return 0;
+
+    int curr_len = strlen(r);
+
+    *r = '\0';
+
+    if (strlen(param) > 0 && (curr_len > 1))
+    {
+        *r = '=';
         return 1;
+    }
+
+    *r = '=';
 
     return 0;
 }
@@ -219,23 +232,23 @@ void communicate(int server_socket)
             n = 0;
             while (timeout && (res = getline(&lineptr, &n, stdin)) != -1)
             {
-                if (res == 1)
+                if (strstr(lineptr, "\n\n"))
+                    break;
+                if (res == 1 || res == 0)
                     timeout--;
 
-                /*
                 if (is_valid_param(lineptr) == 0)
                 {
-                    // write(2, lineptr, strlen(lineptr));
+                    write(2, lineptr, strlen(lineptr));
                     write(2, "Invalid parameter\n", 18);
                 }
-                */
                 else
                 {
-                    // char *r = strstr(lineptr, "=");
+                    char *r = strstr(lineptr, "=");
 
-                    if (1)
+                    if (r)
                     {
-                        // r[strlen(r) - 1] = '\0';
+                        r[strlen(r) - 1] = '\0';
                         params->params =
                             add_param(params->params, lineptr, NULL);
                     }
@@ -245,6 +258,9 @@ void communicate(int server_socket)
                 lineptr = NULL;
                 n = 0;
             }
+
+            free(lineptr);
+            lineptr = NULL;
             n = 0;
             while (write(1, "Payload:\n", 9)
                    && (res = getline(&lineptr, &n, stdin)) != -1)
