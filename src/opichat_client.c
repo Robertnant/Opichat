@@ -187,26 +187,10 @@ int is_in(char *str, char **tab, size_t size)
 // Checks parameter validity. Parameter must contain new line..
 int is_valid_param(char *param)
 {
-    if (strlen(param) == 1)
-        return 1;
-
     char *r = strstr(param, "=");
-    int cond1 = r && r != param && (strlen(r) > 1);
 
-    if (!cond1)
-        return 0;
-
-    int curr_len = strlen(r);
-
-    *r = '\0';
-
-    if (strlen(param) > 0 && (curr_len > 1))
-    {
-        *r = '=';
+    if (r && (param[0] != '=') && (param[strlen(param) - 1] != '='))
         return 1;
-    }
-
-    *r = '=';
 
     return 0;
 }
