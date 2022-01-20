@@ -268,7 +268,7 @@ void get_params(struct params_payload *p)
             // lineptr[n] = '\0';
             if (is_valid_param(lineptr) == 0)
             {
-                fprintf(stderr, "Invalid parameter\n");
+                write(2, "Invalid parameter\n", 18);
                 // fflush(sttderr)
             }
             else
@@ -304,7 +304,7 @@ void get_payload(struct params_payload *params, char *command,
 {
     char *payload = NULL;
 
-    while (fprintf(stdout, "Payload:\n") && (payload = my_getline()) != NULL)
+    while (write(1, "Payload:\n", 9) && (payload = my_getline()) != NULL)
     {
         if (strcmp(payload, "/quit") == 0)
         {
@@ -343,9 +343,7 @@ void communicate(int server_socket)
                            "CREATE-ROOM", "JOIN-ROOM",  "LEAVE-ROOM",
                            "DELETE-ROOM" };
     char *args_commands[2] = { "SEND-DM", "SEND-ROOM" };
-
-    // Use while 1 instead then do parsing to prevent eof check.
-    while (fprintf(stdout, "Command:\n") && (command = my_getline()) != NULL)
+    while (write(1, "Command:\n", 9) && (command = my_getline()) != NULL)
     {
         struct params_payload *params =
             xcalloc(1, sizeof(struct params_payload));
@@ -354,14 +352,14 @@ void communicate(int server_socket)
 
         if (is_in(command, args_commands, 2) == 0)
         {
-            fprintf(stdout, "Parameters:\n");
+            write(1, "Parameters:\n", 12);
             get_params(params);
             get_payload(params, command, server_socket, send);
         }
         else if (is_in(command, commands, 10) == 0)
         {
             // TODO Use different payload (so make code cleaner).
-            fprintf(stdout, "Payload:\n");
+            write(1, "Payload:\n", 9);
             char *payload = my_getline();
 
             if (payload)
@@ -378,7 +376,7 @@ void communicate(int server_socket)
         }
         else
         {
-            fprintf(stderr, "Invalid command\n");
+            write(2, "Invalid command\n", 16);
             // fflush(stdin);
         }
 
