@@ -181,6 +181,7 @@ char *my_getline()
     size_t n = 0;
     while ((c = getchar()) != '\n' && c != EOF)
     {
+        fflush(stdin);
         lineptr[n] = c;
         n++;
 
@@ -249,6 +250,7 @@ void get_params(struct params_payload *p)
         size_t n = 0;
         while ((c = getchar()) != '\n' && c != EOF)
         {
+            fflush(stdin);
             lineptr[n] = c;
             n++;
 
