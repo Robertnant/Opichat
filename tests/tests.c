@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 #include <criterion/criterion.h>
-
 #include <stdio.h>
+
 #include "utils/lexer.h"
 #include "utils/xalloc.h"
 
@@ -27,7 +27,7 @@ Test(CLIENT, ping)
     int count = 0;
     char **parsed = NULL;
     parsed = lexer(&message, &count);
-    char *expected[4] = { "0", "0", "PING", ""};
+    char *expected[4] = { "0", "0", "PING", "" };
     int expected_count = 4;
 
     cr_assert_eq(match(expected, parsed, expected_count, count), 1);
@@ -39,13 +39,13 @@ Test(CLIENT, ping)
 Test(CLIENT, ping_payload)
 {
     char *message = NULL;
-    asprintf(&message, 
-            "40\n0\nPING\n\nIt is what it is and it do be like that\n");
+    asprintf(&message,
+             "40\n0\nPING\n\nIt is what it is and it do be like that\n");
     int count = 0;
     char **parsed = NULL;
     parsed = lexer(&message, &count);
     char *expected[5] = { "40", "0", "PING", "",
-        "It is what it is and it do be like that\n" };
+                          "It is what it is and it do be like that\n" };
     int expected_count = 5;
 
     cr_assert_eq(match(expected, parsed, expected_count, count), 1);
