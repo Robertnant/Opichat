@@ -1,16 +1,11 @@
 #include <criterion/criterion.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../src/opichat_client.h"
 #include "../src/utils/lexer.h"
 #include "../src/utils/tools.h"
 #include "../src/utils/xalloc.h"
-
-// Redirects standard output.
-void redirect_all_stdout(void)
-{
-    cr_redirect_stdout();
-}
 
 Test(CLIENT, gen_message_login_1)
 {
@@ -41,7 +36,7 @@ Test(CLIENT, gen_message_login_2)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "13\n0\nLOGIN\n\nBetterThanACU";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "Expected: %s. got: %s", expected, request);
 }
 
 Test(CLIENT, gen_message_ping)
@@ -53,10 +48,10 @@ Test(CLIENT, gen_message_ping)
 
     char *request = gen_message(size, status, command, params);
     char *expected = "0\n0\nPING\n\n";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "Expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_list-user)
+Test(CLIENT, gen_message_list_user)
 {
     size_t size = 0;
     int status = 0;
@@ -65,10 +60,10 @@ Test(CLIENT, gen_message_list-user)
 
     char *request = gen_message(size, status, command, params);
     char *expected = "0\n0\nLIST-USERS\n\n";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "Expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_send-dm)
+Test(CLIENT, gen_message_send_dm)
 {
     size_t size = 4;
     int status = 0;
@@ -82,7 +77,7 @@ Test(CLIENT, gen_message_send-dm)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "4\n0\nSEND-DM\nUser=acu\n\n2022";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
 Test(CLIENT, gen_message_broadcast)
@@ -98,10 +93,10 @@ Test(CLIENT, gen_message_broadcast)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "4\n0\nBROADCAST\n\n2022";
-    cr_assert__eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_create-room)
+Test(CLIENT, gen_message_create_room)
 {
     size_t size = 8;
     int status = 0;
@@ -114,10 +109,10 @@ Test(CLIENT, gen_message_create-room)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "8\n0\nCREATE-ROOM\n\nFlagRoom";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_list-rooms)
+Test(CLIENT, gen_message_list_rooms)
 {
     size_t size = 0;
     int status = 0;
@@ -126,10 +121,10 @@ Test(CLIENT, gen_message_list-rooms)
 
     char *request = gen_message(size, status, command, params);
     char *expected = "0\n0\nLIST-ROOMS\n\n";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_join-room)
+Test(CLIENT, gen_message_join_room)
 {
     size_t size = 8;
     int status = 0;
@@ -142,10 +137,10 @@ Test(CLIENT, gen_message_join-room)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "8\n0\nJOIN-ROOM\n\npayload";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_leave-room)
+Test(CLIENT, gen_message_leave_room)
 {
     size_t size = 8;
     int status = 0;
@@ -158,10 +153,10 @@ Test(CLIENT, gen_message_leave-room)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "8\n0\nLEAVE-ROOM\n\npayload";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_send-room)
+Test(CLIENT, gen_message_send_room)
 {
     size_t size = 4;
     int status = 0;
@@ -175,10 +170,10 @@ Test(CLIENT, gen_message_send-room)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "4\n0\nSEND-ROOM\nRoom=FlagRoom\n\n2022";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
-Test(CLIENT, gen_message_delete-room)
+Test(CLIENT, gen_message_delete_room)
 {
     size_t size = 8;
     int status = 0;
@@ -191,7 +186,7 @@ Test(CLIENT, gen_message_delete-room)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "8\n0\nDELETE-ROOM\n\nFlagRoom";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
 Test(CLIENT, gen_message_profile)
@@ -203,7 +198,7 @@ Test(CLIENT, gen_message_profile)
 
     char *request = gen_message(size, status, command, params);
     char *expected = "0\n0\nPROFILE\n\n";
-    cr_assert_stdout_eq_str(request, expected);
+    cr_assert_eq(expected, request, "expected: %s. got: %s", expected, request);
 }
 
 /* Test(CLIENT, gen_message_0)
