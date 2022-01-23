@@ -11,7 +11,8 @@ CLIENT_SRC = ./src/opichat_client.c ./src/connection.c ./src/utils/xalloc.c \
 SERVER_BIN= opichat_server
 CLIENT_BIN= opichat_client
 
-TSRC = ./tests/tests.c
+TSRC = ./tests/tests.c ./src/utils/lexer.c \
+       ./src/utils/lexer2.c ./src/utils/tools.c ./src/utils/xalloc.c
 
 all: opichat_server opichat_client
 
@@ -25,8 +26,7 @@ debug: CFLAGS += -g
 debug: all
 
 check: $(SRC) $(TSRC)
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(CLIENT_SRC) \
-	    $(SERVER_SRC) $(TSRC) -o test
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(TSRC) -o test $(LDFLAGS)
 	./test
 
 .PHONY: clean
