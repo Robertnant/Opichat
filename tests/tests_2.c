@@ -1,7 +1,10 @@
 #include <criterion/criterion.h>
+#include <stdlib.h>
 
-#include "opichat_server.h"
+#include "../src/opichat_client.h"
 #include "../src/utils/lexer.h"
+#include "../src/utils/tools.h"
+#include "../src/utils/xalloc.h"
 
 // Redirects standard output.
 void redirect_all_stdout(void)
@@ -22,7 +25,7 @@ Test(CLIENT, gen_message_login_1)
 
     char *request = gen_message(size, status, command, new);
     char *expected = "6\n0\nLOGIN\n\nRobert";
-    cr_assert_eq_str(request, expected);
+    cr_assert_eq(expected, request, "Expected: %s. got: %s", expected, request);
 }
 
 Test(CLIENT, gen_message_login_2)
