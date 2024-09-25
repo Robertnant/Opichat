@@ -23,13 +23,17 @@
 
 ### Project Structure:
 
-- **`opichat_server.c`, `opichat_server.h`:** Contains the server-side implementation.
-- **`opichat_client.c`, `opichat_client.h`:** Contains the client-side implementation.
-- **`connection.c`, `connection.h`:**  Manages client connections, including adding, removing, and finding clients.
-- **`lexer.c`, `lexer.h`:**  Handles message tokenization, validation, and generation of structured messages.
-- **`tools.c`, `tools.h`:** Provides utility functions for managing chat rooms and associated operations.
-- **`xalloc.c`, `xalloc.h`:**  Implements memory allocation wrappers for error handling.
-
+- `src/`
+  - **`opichat_client.c`, `opichat_client.h`:** Contains the client-side implementation.
+  - **`opichat_server.c`, `opichat_server.h`:** Contains the server-side implementation.
+  - **`connection.c`, `connection.h`:**  Manages client connections, including adding, removing, and finding clients.
+    - `utils/`
+      - **`lexer.c`, `lexer.h`:**  Handles message tokenization, validation, and generation of structured messages.
+      - **`tools.c`, `tools.h`:** Provides utility functions for managing chat rooms and associated operations.
+      - **`xalloc.c`, `xalloc.h`:**  Implements memory allocation wrappers for error handling.
+- `tests/`
+  -  **`tests.c`:** Client and server unit tests.
+  
 ## Installation
 To compile the project, you need `gcc` installed. Clone the repository and use the provided `Makefile`.
 
